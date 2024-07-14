@@ -1,0 +1,15 @@
+./solver/definition.f90 
+./solver/main.f90 
+./solver/mpi.f90
+./solver/setup.f90
+./solver/initial.f90
+./solver/coords.f90
+./solver/boundary.f90
+./solver/fromrvetou.f90
+./solver/update.f90
+./solver/rungekutta.f90
+./solver/spatial.f90
+./solver/reconstruct.f90
+./solver/rsolver.f90
+./solver/mhd.f90
+./solver/dataio.f90
