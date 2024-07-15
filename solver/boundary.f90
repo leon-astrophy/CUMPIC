@@ -165,6 +165,13 @@ ENDIF
 !****************************************************************************
 !$ACC END PARALLEL
 
+!****************************************************************************
+! MPI passing boundary values !
+#ifdef MPI
+CALL MPI_BOUNDARY_X(array)
+#endif
+!****************************************************************************
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! y-boundary
 
@@ -355,11 +362,13 @@ INTEGER :: i, j, k, l
 IF(boundary_flag(1) == 0) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)     
-  DO l = 1, NZ
-    DO k = 1, NY 
+  DO l = 0, NZ
+    DO k = 0, NY 
       DO j = 1, NGHOST
         prim(imin:ibx-1,1-j,k,l) = prim(imin:ibx-1,NX+1-j,k,l)    
         bcell(ibx:ibz,1-j,k,l) = bcell(ibx:ibz,NX+1-j,k,l)
+        prim(iby,1-j,k,l) = prim(iby,NX+1-j,k,l)
+        prim(ibz,1-j,k,l) = prim(ibz,NX+1-j,k,l)
       END DO
     END DO               
   ENDDO
@@ -367,11 +376,13 @@ IF(boundary_flag(1) == 0) THEN
 ELSEIF(boundary_flag(1) == 1) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
-    DO k = 1, NY 
+  DO l = 0, NZ
+    DO k = 0, NY 
       DO j = 1, NGHOST
         prim(imin:ibx-1,1-j,k,l) = prim(imin:ibx-1,1,k,l)
         bcell(ibx:ibz,1-j,k,l) = bcell(ibx:ibz,1,k,l)
+        prim(iby,1-j,k,l) = prim(iby,1,k,l)
+        prim(ibz,1-j,k,l) = prim(ibz,1,k,l)
       END DO
     END DO               
   ENDDO
@@ -379,11 +390,13 @@ ELSEIF(boundary_flag(1) == 1) THEN
 ELSEIF(boundary_flag(1) >= 2) THEN    
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
-    DO k = 1, NY 
+  DO l = 0, NZ
+    DO k = 0, NY  
       DO j = 1, NGHOST
         prim(imin:ibx-1,1-j,k,l) = bfac_xin(imin:ibx-1) * prim(imin:ibx-1,j,k,l)
         bcell(ibx:ibz,1-j,k,l) = bfac_xin(ibx:ibz) * bcell(ibx:ibz,j,k,l)
+        prim(iby,1-j,k,l) = bfac_xin(iby)*prim(iby,j,k,l)
+        prim(ibz,1-j,k,l) = bfac_xin(ibz)*prim(ibz,j,k,l)
       END DO
     END DO               
   ENDDO
@@ -395,11 +408,13 @@ ENDIF
 IF(boundary_flag(2) == 0) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
-    DO k = 1, NY 
+  DO l = 0, NZ
+    DO k = 0, NY 
       DO j = 1, NGHOST
         prim(imin:ibx-1,NX+j,k,l) = prim(imin:ibx-1,j,k,l)
         bcell(ibx:ibz,NX+j,k,l) = bcell(ibx:ibz,j,k,l)
+        prim(iby,NX+j,k,l) = prim(iby,j,k,l)
+        prim(ibz,NX+j,k,l) = prim(ibz,j,k,l)
       END DO
     END DO               
   ENDDO
@@ -407,11 +422,13 @@ IF(boundary_flag(2) == 0) THEN
 ELSEIF(boundary_flag(2) == 1) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
-    DO k = 1, NY 
+  DO l = 0, NZ
+    DO k = 0, NY 
       DO j = 1, NGHOST
         prim(imin:ibx-1,NX+j,k,l) = prim(imin:ibx-1,NX,k,l)
         bcell(ibx:ibz,NX+j,k,l) = bcell(ibx:ibz,NX,k,l)
+        prim(iby,NX+j,k,l) = prim(iby,NX,k,l)
+        prim(ibz,NX+j,k,l) = prim(ibz,NX,k,l)
       END DO
     END DO               
   ENDDO
@@ -419,11 +436,13 @@ ELSEIF(boundary_flag(2) == 1) THEN
 ELSEIF(boundary_flag(2) >= 2) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
-    DO k = 1, NY 
+  DO l = 0, NZ
+    DO k = 0, NY 
       DO j = 1, NGHOST
         prim(imin:ibx-1,NX+j,k,l) = bfac_xout(imin:ibx-1) * prim(imin:ibx-1,NX+1-j,k,l)
         bcell(ibx:ibz,NX+j,k,l) = bfac_xout(ibx:ibz) * bcell(ibx:ibz,NX+1-j,k,l)
+        prim(iby,NX+j,k,l) = bfac_xout(iby)*prim(iby,NX+1-j,k,l)
+        prim(ibz,NX+j,k,l) = bfac_xout(ibz)*prim(ibz,NX+1-j,k,l)
       END DO
     END DO               
   ENDDO
@@ -431,7 +450,6 @@ ELSEIF(boundary_flag(2) >= 2) THEN
 ENDIF
 !****************************************************************************
 !$ACC END PARALLEL
-
 
 !****************************************************************************
 ! MPI passing boundary values !
@@ -451,11 +469,13 @@ CALL MPI_BOUNDARYP_X
 IF(boundary_flag(3) == 0) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
+  DO l = 0, NZ
     DO k = 1, NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,1-k,l) = prim(imin:ibx-1,j,NY+1-k,l) 
-        bcell(ibx:ibz,j,1-k,l) = bcell(ibx:ibz,j,NY+1-k,l)                         
+        bcell(ibx:ibz,j,1-k,l) = bcell(ibx:ibz,j,NY+1-k,l)    
+        prim(ibx,j,1-k,l) = prim(ibx,j,NY+1-k,l) 
+        prim(ibz,j,1-k,l) = prim(ibz,j,NY+1-k,l) 
       END DO
     END DO               
   ENDDO 
@@ -463,11 +483,13 @@ IF(boundary_flag(3) == 0) THEN
 ELSEIF(boundary_flag(3) == 1) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
+  DO l = 0, NZ
     DO k = 1, NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,1-k,l) = prim(imin:ibx-1,j,1,l)
-        bcell(ibx:ibz,j,1-k,l) = bcell(ibx:ibz,j,1,l)         
+        bcell(ibx:ibz,j,1-k,l) = bcell(ibx:ibz,j,1,l)      
+        prim(ibx,j,1-k,l) = prim(ibx,j,1,l)
+        prim(ibz,j,1-k,l) = prim(ibz,j,1,l)  
       END DO
     END DO               
   ENDDO 
@@ -475,11 +497,13 @@ ELSEIF(boundary_flag(3) == 1) THEN
 ELSEIF(boundary_flag(3) >= 2) THEN    
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
+  DO l = 0, NZ
     DO k = 1, NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,1-k,l) = bfac_yin(imin:ibx-1) * prim(imin:ibx-1,j,k,l)
-        bcell(ibx:ibz,j,1-k,l) = bfac_yin(ibx:ibz) * bcell(ibx:ibz,j,k,l)       
+        bcell(ibx:ibz,j,1-k,l) = bfac_yin(ibx:ibz) * bcell(ibx:ibz,j,k,l)  
+        prim(ibx,j,1-k,l) = bfac_yin(ibx)*prim(ibx,j,k,l)  
+        prim(ibz,j,1-k,l) = bfac_yin(ibz)*prim(ibz,j,k,l)   
       END DO
     END DO               
   ENDDO 
@@ -491,11 +515,13 @@ ENDIF
 IF(boundary_flag(4) == 0) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
+  DO l = 0, NZ
     DO k = 1, NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,NY+k,l) = prim(imin:ibx-1,j,k,l)
-        bcell(ibx:ibz,j,NY+k,l) = bcell(ibx:ibz,j,k,l)      
+        bcell(ibx:ibz,j,NY+k,l) = bcell(ibx:ibz,j,k,l) 
+        prim(ibx,j,NY+k,l) = prim(ibx,j,k,l) 
+        prim(ibz,j,NY+k,l) = prim(ibz,j,k,l)       
       END DO
     END DO               
   ENDDO 
@@ -503,11 +529,13 @@ IF(boundary_flag(4) == 0) THEN
 ELSEIF(boundary_flag(4) == 1) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
+  DO l = 0, NZ
     DO k = 1, NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,NY+k,l) = prim(imin:ibx-1,j,NY,l)
         bcell(ibx:ibz,j,NY+k,l) = bcell(ibx:ibz,j,NY,l)    
+        prim(ibx,j,NY+k,l) = prim(ibx,j,NY,l)    
+        prim(ibz,j,NY+k,l) = prim(ibz,j,NY,l)    
       END DO
     END DO               
   ENDDO 
@@ -515,11 +543,13 @@ ELSEIF(boundary_flag(4) == 1) THEN
 ELSEIF(boundary_flag(4) >= 2) THEN
 
   !$ACC LOOP GANG WORKER VECTOR COLLAPSE(3)
-  DO l = 1, NZ
+  DO l = 0, NZ
     DO k = 1, NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,NY+k,l) = bfac_yout(imin:ibx-1) * prim(imin:ibx-1,j,NY+1-k,l)
         bcell(ibx:ibz,j,NY+k,l) = bfac_yout(ibx:ibz) * bcell(ibx:ibz,j,NY+1-k,l)
+        prim(ibx,j,NY+k,l) = bfac_yout(ibx)*prim(ibx,j,NY+1-k,l)
+        prim(ibz,j,NY+k,l) = bfac_yout(ibz)*prim(ibz,j,NY+1-k,l) 
       END DO
     END DO               
   ENDDO 
@@ -543,7 +573,9 @@ IF(boundary_flag(5) == 0) THEN
     DO k = 1 - NGHOST, NY + NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,k,1-l) = prim(imin:ibx-1,j,k,NZ+1-l)           
-        bcell(ibx:ibz,j,k,1-l) = bcell(ibx:ibz,j,k,NZ+1-l)                              
+        bcell(ibx:ibz,j,k,1-l) = bcell(ibx:ibz,j,k,NZ+1-l) 
+        prim(ibx,j,k,1-l) = prim(ibx,j,k,NZ+1-l)
+        prim(iby,j,k,1-l) = prim(iby,j,k,NZ+1-l)                           
       END DO
     END DO               
   ENDDO 
@@ -555,7 +587,9 @@ ELSEIF(boundary_flag(5) == 1) THEN
     DO k = 1 - NGHOST, NY + NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,k,1-l) = prim(imin:ibx-1,j,k,1)
-        bcell(ibx:ibz,j,k,1-l) = bcell(ibx:ibz,j,k,1)               
+        bcell(ibx:ibz,j,k,1-l) = bcell(ibx:ibz,j,k,1)       
+        prim(ibx,j,k,1-l) = prim(ibx,j,k,1)
+        prim(iby,j,k,1-l) = prim(iby,j,k,1)        
       END DO
     END DO               
   ENDDO 
@@ -567,7 +601,9 @@ ELSEIF(boundary_flag(5) >= 2) THEN
     DO k = 1 - NGHOST, NY + NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,k,1-l) = bfac_zin(imin:ibx-1) * prim(imin:ibx-1,j,k,l)
-        bcell(ibx:ibz,j,k,1-l) = bfac_zin(ibx:ibz) * bcell(ibx:ibz,j,k,l)         
+        bcell(ibx:ibz,j,k,1-l) = bfac_zin(ibx:ibz) * bcell(ibx:ibz,j,k,l)    
+        prim(ibx,j,k,1-l) = bfac_zin(ibx)*prim(ibx,j,k,l)
+        prim(iby,j,k,1-l) = bfac_zin(iby)*prim(iby,j,k,l)     
       END DO
     END DO               
   ENDDO 
@@ -583,7 +619,9 @@ IF(boundary_flag(6) == 0) THEN
     DO k = 1 - NGHOST, NY + NGHOST
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,k,NZ+l) = prim(imin:ibx-1,j,k,l)
-        bcell(ibx:ibz,j,k,NZ+l) = bcell(ibx:ibz,j,k,l)         
+        bcell(ibx:ibz,j,k,NZ+l) = bcell(ibx:ibz,j,k,l)       
+        prim(ibx,j,k,NZ+l) = prim(ibx,j,k,l)
+        prim(iby,j,k,NZ+l) = prim(iby,j,k,l)     
       END DO
     END DO               
   ENDDO 
@@ -596,6 +634,8 @@ ELSEIF(boundary_flag(6) == 1) THEN
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,k,NZ+l) = prim(imin:ibx-1,j,k,NZ)   
         bcell(ibx:ibz,j,k,NZ+l) = bcell(ibx:ibz,j,k,NZ)       
+        prim(ibx,j,k,NZ+l) = prim(ibx,j,k,NZ)
+        prim(iby,j,k,NZ+l) = prim(iby,j,k,NZ)   
       END DO
     END DO               
   ENDDO 
@@ -608,6 +648,8 @@ ELSEIF(boundary_flag(6) >= 2) THEN
       DO j = 1 - NGHOST, NX + NGHOST
         prim(imin:ibx-1,j,k,NZ+l) = bfac_zout(imin:ibx-1) * prim(imin:ibx-1,j,k,NZ+1-l)   
         bcell(ibx:ibz,j,k,NZ+l) = bfac_zout(ibx:ibz) * bcell(ibx:ibz,j,k,NZ+1-l)    
+        prim(ibx,j,k,NZ+l) = bfac_zout(ibx)*prim(ibx,j,k,NZ+1-l)
+        prim(iby,j,k,NZ+l) = bfac_zout(iby)*prim(iby,j,k,NZ+1-l)     
       END DO
     END DO               
   ENDDO 

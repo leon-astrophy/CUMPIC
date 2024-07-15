@@ -23,7 +23,6 @@ include "mpif.h"
 ! Integer !
 INTEGER :: i, j, k, l
 INTEGER :: blocks, stride
-INTEGER :: reduced_nvars
 
 ! For cartesian topology !
 INTEGER, DIMENSION(1:3) :: dims
@@ -35,6 +34,11 @@ LOGICAL, DIMENSION(1:3) :: periods
 INTEGER, DIMENSION(1:4) :: sizes
 INTEGER, DIMENSION(1:4) :: subsizes
 INTEGER, DIMENSION(1:4) :: starting
+
+! For communication between blocks !
+INTEGER, DIMENSION(1:3) :: scalar_sizes
+INTEGER, DIMENSION(1:3) :: scalar_subsizes
+INTEGER, DIMENSION(1:3) :: scalar_starting
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Check if the number of processes is consistent !
@@ -140,30 +144,81 @@ stops(1) = starts(1) + nx
 stops(2) = starts(2) + ny
 stops(3) = starts(3) + nz
 
-! Reduced number of variables, do not pass face-centered field to ghost zone !
-reduced_nvars = ibx - imin
+!================================================================================================!
 
 ! Now create MPI datatype for message passing between ghost cells !
 ! This is for along the NZ direction !
 sizes = (/no_of_eq,NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
-subsizes = (/reduced_nvars,NX+2*NGHOST,NY+2*NGHOST,NGHOST/)
+subsizes = (/no_of_eq,NX+2*NGHOST,NY+2*NGHOST,NGHOST/)
 starting = (/0,0,0,0/)
 CALL MPI_Type_create_subarray(4, sizes, subsizes, starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, face_type(1), ierror)
 CALL MPI_Type_commit(face_type(1), ierror)
 
 ! Along the NY direction !
 sizes = (/no_of_eq,NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
-subsizes = (/reduced_nvars,NX+2*NGHOST,NGHOST,NZ/)
+subsizes = (/no_of_eq,NX+2*NGHOST,NGHOST,NZ+1/)
 starting = (/0,0,0,0/)
 CALL MPI_Type_create_subarray(4, sizes, subsizes, starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, face_type(2), ierror)
 CALL MPI_Type_commit(face_type(2), ierror)
 
 ! Along the NX direction !
 sizes = (/no_of_eq,NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
-subsizes = (/reduced_nvars,NGHOST,NY,NZ/)
+subsizes = (/no_of_eq,NGHOST,NY+1,NZ+1/)
 starting = (/0,0,0,0/)
 CALL MPI_Type_create_subarray(4, sizes, subsizes, starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, face_type(3), ierror)
 CALL MPI_Type_commit(face_type(3), ierror)
+
+!================================================================================================!
+! Here is for cell centered magnetic field !
+
+! Now create MPI datatype for message passing between ghost cells !
+! This is for along the NZ direction !
+sizes = (/3,NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
+subsizes = (/3,NX+2*NGHOST,NY+2*NGHOST,NGHOST/)
+starting = (/0,0,0,0/)
+CALL MPI_Type_create_subarray(4, sizes, subsizes, starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, bcell_type(1), ierror)
+CALL MPI_Type_commit(bcell_type(1), ierror)
+
+! Along the NY direction !
+sizes = (/3,NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
+subsizes = (/3,NX+2*NGHOST,NGHOST,NZ/)
+starting = (/0,0,0,0/)
+CALL MPI_Type_create_subarray(4, sizes, subsizes, starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, bcell_type(2), ierror)
+CALL MPI_Type_commit(bcell_type(2), ierror)
+
+! Along the NX direction !
+sizes = (/3,NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
+subsizes = (/3,NGHOST,NY,NZ/)
+starting = (/0,0,0,0/)
+CALL MPI_Type_create_subarray(4, sizes, subsizes, starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, bcell_type(3), ierror)
+CALL MPI_Type_commit(bcell_type(3), ierror)
+
+!================================================================================================!
+! Here is for epsilon !
+
+! Now create MPI datatype for message passing between ghost cells !
+! This is for along the NZ direction !
+scalar_sizes = (/NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
+scalar_subsizes = (/NX+2*NGHOST,NY+2*NGHOST,NGHOST/)
+scalar_starting = (/0,0,0/)
+CALL MPI_Type_create_subarray(3, scalar_sizes, scalar_subsizes, scalar_starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, scalar_type(1), ierror)
+CALL MPI_Type_commit(scalar_type(1), ierror)
+
+! Along the NY direction !
+scalar_sizes = (/NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
+scalar_subsizes = (/NX+2*NGHOST,NGHOST,NZ/)
+scalar_starting = (/0,0,0/)
+CALL MPI_Type_create_subarray(3, scalar_sizes, scalar_subsizes, scalar_starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, scalar_type(2), ierror)
+CALL MPI_Type_commit(scalar_type(2), ierror)
+
+! Along the NX direction !
+scalar_sizes = (/NX+2*NGHOST,NY+2*NGHOST,NZ+2*NGHOST/)
+scalar_subsizes = (/NGHOST,NY,NZ/)
+scalar_starting = (/0,0,0/)
+CALL MPI_Type_create_subarray(3, scalar_sizes, scalar_subsizes, scalar_starting, MPI_ORDER_FORTRAN, MPI_DOUBLE, scalar_type(3), ierror)
+CALL MPI_Type_commit(scalar_type(3), ierror)
+
+!================================================================================================!
 
 ! Barrier !
 CALL MPI_BARRIER(new_comm, ierror) 
@@ -206,15 +261,65 @@ include "mpif.h"
 
 ! Send my last NG cell to my right neighbour's ghost cell !
 ! Receive my left neighbour's last NG cell to my ghost cell !
-CALL MPI_Sendrecv(prim(1,NX-NGHOST+1,1,1), 1, face_type(3), neighbors(1,1,2), 0, &
-                  prim(1,1-NGHOST,1,1), 1, face_type(3), neighbors(1,1,0), 0, & 
+CALL MPI_Sendrecv(prim(1,NX-NGHOST+1,0,0), 1, face_type(3), neighbors(1,1,2), 0, &
+                  prim(1,1-NGHOST,0,0), 1, face_type(3), neighbors(1,1,0), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 
 ! Send my first NG cell to my left neighbour's ghost cell !
 ! Receive my right neighbour's first NG cell to my ghost cell !
-CALL MPI_Sendrecv(prim(1,1,1,1), 1, face_type(3), neighbors(1,1,0), 0, &
-                  prim(1,NX+1,1,1), 1, face_type(3), neighbors(1,1,2), 0, & 
+CALL MPI_Sendrecv(prim(1,1,0,0), 1, face_type(3), neighbors(1,1,0), 0, &
+                  prim(1,NX+1,0,0), 1, face_type(3), neighbors(1,1,2), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Do the same for cell-centered magnetic field !
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(bcell(ibx,NX-NGHOST+1,1,1), 1, bcell_type(3), neighbors(1,1,2), 0, &
+                  bcell(ibx,1-NGHOST,1,1), 1, bcell_type(3), neighbors(1,1,0), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(bcell(ibx,1,1,1), 1, bcell_type(3), neighbors(1,1,0), 0, &
+                  bcell(ibx,NX+1,1,1), 1, bcell_type(3), neighbors(1,1,2), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+END SUBROUTINE
+
+!----------------------------------------------------------------------
+!
+! This subroutine finialize transfer message from active cell to ghost
+! cell across MPI processes along the x-direction, for non-primitive
+! 3D arrays
+!
+!----------------------------------------------------------------------
+
+SUBROUTINE MPI_BOUNDARY_X(array)
+USE DEFINITION
+IMPLICIT NONE
+include "mpif.h"
+
+! Input/Output array
+REAL*8, INTENT (IN), DIMENSION (1-NGHOST:NX+3,1-NGHOST:NY+3,1-NGHOST:NZ+3) :: array
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(array(NX-NGHOST+1,1,1), 1, scalar_type(3), neighbors(1,1,2), 0, &
+                  array(1-NGHOST,1,1), 1, scalar_type(3), neighbors(1,1,0), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(array(1,1,1), 1, scalar_type(3), neighbors(1,1,0), 0, &
+                  array(NX+1,1,1), 1, scalar_type(3), neighbors(1,1,2), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

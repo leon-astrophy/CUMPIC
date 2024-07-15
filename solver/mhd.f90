@@ -51,11 +51,11 @@ DO l = 0, nz
     DO j = 0, nx
 
       ! Add emf !
-      ecorn(iex,j,k,l) = ecorn(iex,j,k,l) - 0.25D0*(ecell(iex,j,k,l) + ecell(iex,j,k,l+1) + ecell(iex,j,k+1,l) + ecell(iex,j,k+1,l+1))
+      ecorn(iex,j,k,l) = ecorn(iex,j,k,l)*2.0d0 - 0.25D0*(ecell(iex,j,k,l) + ecell(iex,j,k,l+1) + ecell(iex,j,k+1,l) + ecell(iex,j,k+1,l+1))
 
-      ecorn(iey,j,k,l) = ecorn(iey,j,k,l) - 0.25D0*(ecell(iey,j,k,l) + ecell(iey,j,k,l+1) + ecell(iey,j+1,k,l) + ecell(iey,j+1,k,l+1))
+      ecorn(iey,j,k,l) = ecorn(iey,j,k,l)*2.0d0 - 0.25D0*(ecell(iey,j,k,l) + ecell(iey,j,k,l+1) + ecell(iey,j+1,k,l) + ecell(iey,j+1,k,l+1))
 
-      ecorn(iez,j,k,l) = ecorn(iez,j,k,l) - 0.25D0*(ecell(iez,j,k,l) + ecell(iez,j,k+1,l) + ecell(iez,j+1,k,l) + ecell(iez,j+1,k+1,l))
+      ecorn(iez,j,k,l) = ecorn(iez,j,k,l)*2.0d0 - 0.25D0*(ecell(iez,j,k,l) + ecell(iez,j,k+1,l) + ecell(iez,j+1,k,l) + ecell(iez,j+1,k+1,l))
 
     END DO
   END DO

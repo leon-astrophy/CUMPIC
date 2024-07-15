@@ -84,30 +84,57 @@ SUBROUTINE initial_update
 USE DEFINITION
 IMPLICIT NONE
 
+#ifdef MPI
+include "mpif.h"
+#endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Find MPI rank
+#ifdef MPI
+call MPI_COMM_RANK(MPI_COMM_WORLD, mpi_rank, ierror)
+#else
+mpi_rank = 0
+#endif
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! prepare everything ... !
 
 ! Check density !
 CALL CUSTOM_CHECKRHO
 
-WRITE(*,*) 'Build conservative variables'
+! Convert from primitive to conservative variables !
+IF(mpi_rank == 0) THEN
+  WRITE(*,*) 'Build conservative variables'
+END IF
 CALL FROMRVETOU
-WRITE(*,*) 'Done building initial conservative variables'
-WRITE(*,*)
+IF(mpi_rank == 0) THEN
+  WRITE(*,*) 'Done building initial conservative variables'
+  WRITE(*,*)
+END IF
 
 ! set boundary conditions !
 CALL BOUNDARY
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Calculate the items needed for SPATIAL
-WRITE(*,*) 'Do Update'
+
+! Update pressure, etc ... !
+IF(mpi_rank == 0) THEN
+  WRITE(*,*) 'Do Update'
+END IF
 CALL UPDATE (0)
-WRITE(*,*) 'Done initial update'
-WRITE(*,*)
+IF(mpi_rank == 0) THEN
+  WRITE(*,*) 'Done initial update'
+  WRITE(*,*)
+END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-WRITE(*,*) 'Finish initial...'
-WRITE(*,*)
+! Print out !
+IF(mpi_rank == 0) THEN
+  WRITE(*,*) 'Finish initial...'
+  WRITE(*,*)
+END IF
 
 END SUBROUTINE

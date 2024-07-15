@@ -26,7 +26,7 @@ SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Number of CPUs along the first dimension
-INTEGER, PARAMETER :: NXCPU = 1
+INTEGER, PARAMETER :: NXCPU = 4
 
 ! Number of CPUs along the second dimension
 INTEGER, PARAMETER :: NYCPU = 1
@@ -309,6 +309,9 @@ INTEGER :: new_comm
 
 ! For communication !
 INTEGER, DIMENSION(1:3) :: face_type
+INTEGER, DIMENSION(1:3) :: bcell_type
+INTEGER, DIMENSION(1:3) :: bface_type
+INTEGER, DIMENSION(1:3) :: scalar_type
 INTEGER, DIMENSION(0:2,0:2,0:2) :: neighbors
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -316,8 +319,7 @@ INTEGER, DIMENSION(0:2,0:2,0:2) :: neighbors
 
 ! for HDF5 !
 integer :: error
-integer(HID_T) :: file_id, dspace_id, dset_id
-integer(HSIZE_T) :: eps_dims(3), data_dims(4), dist_dims(1)
+integer(HID_T) :: file_id, dset_id, plist_id, space_id, mem_id
 
 !****************************************************************************************************!
 contains

@@ -189,9 +189,9 @@ DO l = 0, nz
     DO j = 0, nx
 
       ! Add emf !
-      ecorn(iey,j,k,l) = ecorn(iey,j,k,l) + 0.50D0*(flux(ibz,j,k,l) + flux(ibz,j,k,l+1))
+      ecorn(iey,j,k,l) = ecorn(iey,j,k,l) + 0.25d0*(flux(ibz,j,k,l) + flux(ibz,j,k,l+1))
 
-      ecorn(iez,j,k,l) = ecorn(iez,j,k,l) + 0.50D0*(- flux(iby,j,k,l) - flux(iby,j,k+1,l))
+      ecorn(iez,j,k,l) = ecorn(iez,j,k,l) + 0.25d0*(- flux(iby,j,k,l) - flux(iby,j,k+1,l))
 
     END DO
   END DO
@@ -200,6 +200,7 @@ END DO
 !==============================================================================================================!
 
 ! Then loop through the y-direction
+!IF(NY > 1) THEN 
 !--------------------------------------------------------------------------------------------------------------!
 ! Interpolate to get L/R state !
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
@@ -267,18 +268,19 @@ DO l = 0, nz
     DO j = 0, nx
 
       ! Add emf !
-      ecorn(iex,j,k,l) = ecorn(iex,j,k,l) + 0.50D0*(- flux(ibz,j,k,l) - flux(ibz,j,k,l+1))
+      ecorn(iex,j,k,l) = ecorn(iex,j,k,l) + 0.25d0*(- flux(ibz,j,k,l) - flux(ibz,j,k,l+1))
 
-      ecorn(iez,j,k,l) = ecorn(iez,j,k,l) + 0.50D0*(flux(ibx,j,k,l) + flux(ibx,j+1,k,l))
+      ecorn(iez,j,k,l) = ecorn(iez,j,k,l) + 0.25d0*(flux(ibx,j,k,l) + flux(ibx,j+1,k,l))
 			
     END DO
   END DO
 END DO
 !$ACC END PARALLEL
 !==============================================================================================================!
+!END IF
 
 ! Finally loop through the z-direction
-IF(NZ > 1) THEN ! This switch might or might not be problematic
+!IF(NZ > 1) THEN 
 !--------------------------------------------------------------------------------------------------------------!
 ! Interpolate to get L/R state !
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
@@ -346,16 +348,16 @@ DO l = 0, nz
     DO j = 0, nx
 
       ! Add emf !
-      ecorn(iex,j,k,l) = ecorn(iex,j,k,l) + 0.50D0*(flux(iby,j,k,l) + flux(iby,j,k+1,l))
+      ecorn(iex,j,k,l) = ecorn(iex,j,k,l) + 0.25d0*(flux(iby,j,k,l) + flux(iby,j,k+1,l))
 
-      ecorn(iey,j,k,l) = ecorn(iey,j,k,l) + 0.50D0*(- flux(ibx,j,k,l) - flux(ibx,j+1,k,l))
+      ecorn(iey,j,k,l) = ecorn(iey,j,k,l) + 0.25d0*(- flux(ibx,j,k,l) - flux(ibx,j+1,k,l))
 
     END DO
   END DO
 END DO
 !$ACC END PARALLEL
 !--------------------------------------------------------------------------------------------------------------!
-ENDIF
+!ENDIF
 
 ! At the end, add source terms !
 !--------------------------------------------------------------------------------------------------------------!

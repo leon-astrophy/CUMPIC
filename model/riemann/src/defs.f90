@@ -17,8 +17,9 @@ REAL*8, PARAMETER :: ggas = 2.0d0
 ! Define Riemann Problem Test !
 
 ! Define here !
-INTEGER, PARAMETER :: brio_wu = 1
-INTEGER, PARAMETER :: mhd_rotor = 2
+INTEGER, PARAMETER :: toro_1 = 1
+INTEGER, PARAMETER :: brio_wu = 2
+INTEGER, PARAMETER :: mhd_rotor = 3
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Which test model? 

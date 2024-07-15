@@ -49,6 +49,8 @@ REAL*8, INTENT(OUT), DIMENSION(1:no_of_eq) :: p_out
 ! Choose by case !
 SELECT CASE (riemann_test)
 !---------------------------------------------------------------------------!
+CASE (toro_1)
+  CALL TORO_SHOCKTUBE_1(j_in,k_in,l_in,p_out,eps_out)
 CASE (brio_wu)
   CALL BRIOWU_SHOCKTUBE(j_in,k_in,l_in,p_out,eps_out)
 CASE (mhd_rotor)
