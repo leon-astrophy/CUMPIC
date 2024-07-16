@@ -1,4 +1,4 @@
-CUMPIC - MPI Parallelized version of CUMC3D !
+CUMPIC - MPI Parallelized version of CUMC3D 
 
 !******************************************************************!
 
