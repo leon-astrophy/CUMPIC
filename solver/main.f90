@@ -86,7 +86,8 @@ CALL initial_model
 ! Section for GPU !
 
 #ifdef GPU
-!CALL POPULATE_DEVICE
+CALL ASSIGN_DEVICE
+CALL POPULATE_DEVICE
 #endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -153,13 +154,6 @@ END DO
 ! Output again
 
 call print_hydroprofile
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! section for open acc
-
-#ifdef GPU
-!CALL CLEAR_DEVICE
-#endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Finalize MPI !

@@ -16,9 +16,6 @@ IMPLICIT NONE
 ! Dummy variables
 INTEGER :: i, j, k, l
 
-! Dummy !
-REAL*8 :: rhoaold, dummy
-
 !---------------------------------------------------------------------------------------------!     
 
 ! Backup old arrays !
@@ -162,6 +159,8 @@ END SUBROUTINE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE finddt
+!$ACC ROUTINE (EOS_SOUNDSPEED) SEQ
+!$ACC ROUTINE (coord_dx) SEQ
 USE DEFINITION
 IMPLICIT NONE
 
@@ -204,13 +203,13 @@ dt_temp = 1.0d10
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) &
 !$ACC PRIVATE(cs_loc, a2_mhd, b2_mhd, a4_mhd, b4_mhd, b2x_mhd, b2y_mhd, b2z_mhd, & 
 !$ACC cfx_mhd, cfy_mhd, cfz_mhd, lambda, lambda1, lambda2, lambda3, &
-!$ACC dx_loc, dy_loc, dz_loc, geom_length_x, geom_length_y, geom_length_z) REDUCTION(MIN:dt_out)
+!$ACC dx_loc, dy_loc, dz_loc, geom_length_x, geom_length_y, geom_length_z) REDUCTION(MIN:dt_temp)
 DO l = 1, NZ
 	DO k = 1, NY
 		DO j = 1, NX
 
 			! find speed of sound cs !
-			CALL EOS_SOUNDSPEED (prim(itau,j,k,l), prim(irho,j,k,l), cs_loc)
+			CALL EOS_SOUNDSPEED (prim(itau,j,k,l), prim(irho,j,k,l), eps(j,k,l), cs_loc)
 
 			! Only grid with density above threshold density is counted
 			a2_mhd = cs_loc*cs_loc

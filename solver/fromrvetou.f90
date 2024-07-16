@@ -19,6 +19,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE FROMRVETOU
+!$ACC ROUTINE (P_to_U) SEQ
 USE DEFINITION
 IMPLICIT NONE
 
@@ -57,7 +58,7 @@ DO l = 0, nz
     DO j = 0, nx
 
       ! Pass the primitive variables to the primitive to conservative warpper !
-      CALL P_to_U(prim(:,j,k,l), bcell(:,j,k,l), eps(j,k,l), cons(:,j,k,l))
+      CALL P_to_U(j,k,l)
 
 	  END DO
   END DO
@@ -72,6 +73,7 @@ END SUBROUTINE
 ! Convert back to primitive variables !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE FROMUTORVE
+!$ACC ROUTINE (U_to_P) SEQ
 USE DEFINITION
 IMPLICIT NONE
 
@@ -113,7 +115,7 @@ DO l = 0, nz
     DO j = 0, nx
       
       ! Pass the primitive variables to the primitive to conservative warpper !
-      CALL U_to_P(bcell(:,j,k,l), cons(:,j,k,l), prim(:,j,k,l), eps(j,k,l))
+      CALL U_to_P(j,k,l)
       
     END DO
   END DO
@@ -121,96 +123,6 @@ END DO
 !$ACC END PARALLEL
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-END SUBROUTINE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Given primitive variables, construct conservative variables 
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE P_to_U(prim_in, bcell_in, eps_in, cons_out)
-!$acc routine seq
-USE DEFINITION
-IMPLICIT NONE
-
-! Input/Output array
-REAL*8, INTENT (IN) :: eps_in
-REAL*8, INTENT (IN), DIMENSION (ibx:ibz) :: bcell_in
-REAL*8, INTENT (IN), DIMENSION (1:no_of_eq) :: prim_in
-REAL*8, INTENT (OUT), DIMENSION (1:no_of_eq) :: cons_out
-
-! Local array !
-REAL*8 :: vsquare, bsquare
-
-!--------------------------------------------------------------------------!
-! Do the conversion 
-
-! Get v*v and b*b !
-vsquare = dot_product(prim_in(ivx:ivz), prim_in(ivx:ivz))
-bsquare = dot_product(bcell_in(ibx:ibz), bcell_in(ibx:ibz))	  
-
-! Assign conservative variables to core hyrodynamic variables !
-cons_out(irho) = prim_in(irho)
-cons_out(ivx:ivz) = prim_in(ivx:ivz)*prim_in(irho)
-cons_out(itau) = prim_in(irho)*(eps_in + 0.5D0*vsquare) + 0.5D0*bsquare
-
-! Magnetic field at face center !
-cons_out(ibx:ibz) = prim_in(ibx:ibz)
-
-! For any scalar variables 
-IF(itau+1 .ne. ibx) THEN
-  cons_out(itau+1:ibx-1) = prim_in(itau+1:ibx-1)*prim_in(irho)
-END IF
-
-!--------------------------------------------------------------------------!
-
-END SUBROUTINE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Given conservative variables, invert to get primitive variables 
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE U_to_P(bcell_in, cons_in, prim_out, eps_out)
-!$acc routine seq
-USE DEFINITION
-IMPLICIT NONE
-
-! Input
-REAL*8, INTENT (IN), DIMENSION (ibx:ibz) :: bcell_in
-REAL*8, INTENT (IN), DIMENSION (1:no_of_eq) :: cons_in
-
-! Output
-REAL*8, INTENT (OUT) :: eps_out
-REAL*8, INTENT (OUT), DIMENSION (1:no_of_eq) :: prim_out
-
-! Local array !
-REAL*8 :: vsquare, bsquare
-
-!--------------------------------------------------------------------------!
-! Do the conversion 
-
-! Core primitive variables !
-prim_out(irho) = cons_in(irho)
-prim_out(ivx:ivz) = cons_in(ivx:ivz)/cons_in(irho)
-
-! Magnetic fields !
-prim_out(ibx:ibz) = cons_in(ibx:ibz)
-
-! Get v*v and b*b !
-bsquare = dot_product(bcell_in(ibx:ibz), bcell_in(ibx:ibz))
-vsquare = dot_product(prim_out(ivx:ivz), prim_out(ivx:ivz))
-
-! For any scalar variables 
-IF(itau+1 .ne. ibx) THEN
-  prim_out(itau+1:ibx-1) = cons_in(itau+1:ibx-1)/cons_in(irho)
-END IF
-
-! epsilon here, CAUTION: no negativity check !
-eps_out = (cons_in(itau) - 0.5D0*bsquare)/cons_in(irho) - 0.5D0 * vsquare
-
-!--------------------------------------------------------------------------!
 
 END SUBROUTINE
 

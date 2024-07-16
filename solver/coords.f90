@@ -102,20 +102,13 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE GEOM_SOURCE(j_in,k_in,l_in,prim_in,bcell_in,sc_out)
-!$ACC ROUTINE SEQ
+SUBROUTINE GEOM_SOURCE(j_in,k_in,l_in)
+!$ACC ROUTINE SEQ 
 USE DEFINITION
 IMPLICIT NONE
 
 ! Input !
 INTEGER, INTENT(IN) :: j_in, k_in, l_in
-
-! Input/Output array
-REAL*8, INTENT (IN), DIMENSION (ibx:ibz) :: bcell_in
-REAL*8, INTENT (IN), DIMENSION (1:no_of_eq) :: prim_in
-
-! Output !
-REAL*8, INTENT (OUT), DIMENSION (1:no_of_eq) :: sc_out
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -128,6 +121,7 @@ END SUBROUTINE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE GEOM_FLUX(dir_in,j_in,k_in,l_in,geom_flux_p,geom_flux_c,geom_flux_m)
+!$ACC ROUTINE (COORD_DX) SEQ
 !$ACC ROUTINE SEQ
 USE DEFINITION
 IMPLICIT NONE

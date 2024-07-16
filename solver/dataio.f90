@@ -5,7 +5,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE print_hydroprofile
+#ifdef USEHF5
 USE HDF5
+#endif
 USE DEFINITION
 IMPLICIT NONE
 
@@ -21,7 +23,7 @@ character(len=99) :: filename
 ! section for GPU !
 
 #ifdef GPU
-!$ACC UPDATE HOST(prim2(imin2:imax2,:,:,:), epsilon2, bcell)
+!$ACC UPDATE HOST(prim, eps)
 #endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -32,6 +34,7 @@ CALL MPI_COMM_SIZE(new_comm, mpi_size, ierror)
 CALL MPI_COMM_RANK(new_comm, mpi_rank, ierror)
 #endif 
 
+#ifdef USEHF5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Open file 
 
@@ -81,9 +84,11 @@ CALL h5pclose_f(plist_id, error)
 CALL h5close_f(error)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#endif
 
 END SUBROUTINE 
 
+#ifdef USEHF5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! This subroutine output scalar variables to the hdf5 file
@@ -125,7 +130,7 @@ call h5sclose_f(space_id,error)
 
 !--------------------------------------------------------------------------!
 
-  END SUBROUTINE
+END SUBROUTINE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
@@ -239,13 +244,13 @@ character(len=99) :: name
 !------------------------------------------------------------------------------------!
 
 ! Set the rank of the data set !
-space_rank = 4
+space_rank = 3
 
 ! Set dimensions, count and off set !
 name = "eps"
 dims(1) = nxtot
 dims(2) = nytot
-dims(3) = nytot
+dims(3) = nztot
 count = (/nx,ny,nz/)
 offset = (/starts(1),starts(2),starts(3)/) 
 
@@ -308,7 +313,7 @@ name = "prim"
 dims(1) = no_of_eq
 dims(2) = nxtot
 dims(3) = nytot
-dims(4) = nytot
+dims(4) = nztot
 count = (/no_of_eq,nx,ny,nz/)
 offset = (/0,starts(1),starts(2),starts(3)/) 
 
@@ -337,3 +342,4 @@ CALL h5sclose_f(mem_id, error)
 !------------------------------------------------------------------------------------!
 
 END SUBROUTINE
+#endif

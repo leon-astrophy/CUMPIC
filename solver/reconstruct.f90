@@ -15,7 +15,8 @@
 ! Interface that decide reconstruction method
 !
 !*******************************************************************
-SUBROUTINE INTERPOLATE (dir_in, j_in, k_in, l_in, vin, vm_out, vp_out)
+SUBROUTINE INTERPOLATE (dir_in, j_in, k_in, l_in, vm2, vm1, vc, vp1, vp2, vm_out, vp_out)
+!$ACC ROUTINE (TVD_MM) SEQ
 !$ACC ROUTINE SEQ
 USE DEFINITION
 IMPLICIT NONE
@@ -24,7 +25,7 @@ IMPLICIT NONE
 INTEGER, INTENT (IN) :: dir_in, j_in, k_in, l_in
 
 ! Input conservative variables !
-REAL*8, INTENT (IN), DIMENSION(-2:2) :: vin
+REAL*8, INTENT (IN) :: vm2, vm1, vc, vp1, vp2
 
 ! The reconstructed states at cell boundary !
 REAL*8, INTENT (OUT) :: vm_out, vp_out
@@ -36,7 +37,7 @@ select case(RECON)
 ! TVD MM !
 !-----------------------------------------------------------------------
 case(TVDMM)
-  CALL TVD_MM (dir_in, j_in, k_in, l_in, vin, vm_out, vp_out)
+  CALL TVD_MM (dir_in, j_in, k_in, l_in, vm2, vm1, vc, vp1, vp2, vm_out, vp_out)
 
 !-----------------------------------------------------------------------
 end select
@@ -48,8 +49,9 @@ END SUBROUTINE
 ! TVD with minmod limiter, reference: Mignone 2014
 !
 !*******************************************************************
-SUBROUTINE TVD_MM (dir_in, j_in, k_in, l_in, vin, vm_out, vp_out)
-!$ACC ROUTINE SEQ 
+SUBROUTINE TVD_MM (dir_in, j_in, k_in, l_in, vm2, vm1, vc, vp1, vp2, vm_out, vp_out)
+!$ACC ROUTINE (coord_dx) SEQ
+!$ACC ROUTINE SEQ
 USE DEFINITION
 IMPLICIT NONE
 
@@ -57,7 +59,7 @@ IMPLICIT NONE
 INTEGER, INTENT (IN) :: dir_in, j_in, k_in, l_in
 
 ! Input conservative variables !
-REAL*8, INTENT (IN), DIMENSION(-2:2) :: vin
+REAL*8, INTENT (IN) :: vm2, vm1, vc, vp1, vp2
 
 ! The reconstructed states at cell boundary !
 REAL*8, INTENT (OUT) :: vm_out, vp_out
@@ -103,8 +105,8 @@ cf = (dh_c + dh_p1)/dh_c
 cb = (dh_c + dh_m1)/dh_c
 
 ! Assign !
-dqf = 2.0d0*(vin(1) - vin(0))/cf
-dqb = 2.0d0*(vin(0) - vin(-1))/cb
+dqf = 2.0d0*(vp1 - vc)/cf
+dqb = 2.0d0*(vc - vm1)/cb
 
 ! Assign slope !
 slope = 0.5d0*(SIGN(1.0d0, dqf) + SIGN(1.0d0, dqb))*MIN(ABS(dqf), ABS(dqb))
@@ -112,8 +114,8 @@ slope = 0.5d0*(SIGN(1.0d0, dqf) + SIGN(1.0d0, dqb))*MIN(ABS(dqf), ABS(dqb))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Output !
-vp_out = vin(0) + 0.5d0*slope
-vm_out = vin(0) - 0.5d0*slope
+vp_out = vc + 0.5d0*slope
+vm_out = vc - 0.5d0*slope
   
 !----------------------------------------------------------------------!
 

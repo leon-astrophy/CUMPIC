@@ -9,7 +9,8 @@
 ! Interface that decide reconstruction method
 !
 !*******************************************************************
-SUBROUTINE RIEMANN (dir_in, pl_in, pr_in, f_out)
+SUBROUTINE RIEMANN (dir_in, j_in, k_in, l_in)
+!$ACC ROUTINE (HLL_SOLVER) SEQ
 !$ACC ROUTINE SEQ
 USE DEFINITION
 IMPLICIT NONE
@@ -17,12 +18,8 @@ IMPLICIT NONE
 ! Index tuple !
 INTEGER, INTENT (IN) :: dir_in
 
-! Input variables !
-REAL*8, INTENT (IN), DIMENSION(1:no_of_eq) :: pl_in
-REAL*8, INTENT (IN), DIMENSION(1:no_of_eq) :: pr_in
-
-! Output fluxes !
-REAL*8, INTENT (OUT), DIMENSION(1:no_of_eq) :: f_out
+! Location index !
+INTEGER, INTENT (IN) :: j_in, k_in, l_in
 
 ! Select based on case 
 !-----------------------------------------------------------------------
@@ -31,7 +28,7 @@ select case(SOLVER)
 ! TVD MM !
 !-----------------------------------------------------------------------
 case(HLL)
-  CALL HLL_SOLVER (dir_in, pl_in, pr_in, f_out)
+  CALL HLL_SOLVER (dir_in, j_in, k_in, l_in)
 
 !-----------------------------------------------------------------------
 end select
@@ -43,28 +40,20 @@ END SUBROUTINE
 ! The HLL flux, see for example, TORO's book on numerical hydrodynamics 
 !			    
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE HLL_SOLVER (dir_in, pl_in, pr_in, f_out)
+SUBROUTINE HLL_SOLVER (dir_in, j_in, k_in, l_in)
+!$ACC ROUTINE (EOS_EPSILON) SEQ
+!$ACC ROUTINE (P_to_U_face) SEQ
+!$ACC ROUTINE (P_to_flux) SEQ
+!$ACC ROUTINE (EOS_SOUNDSPEED) SEQ 
 !$ACC ROUTINE SEQ
-USE DEFINITION 
+USE DEFINITION
 IMPLICIT NONE
   
 ! integer !
 INTEGER, INTENT(IN) :: dir_in
 
-! Input variables !
-REAL*8, INTENT (IN), DIMENSION(1:no_of_eq) :: pl_in
-REAL*8, INTENT (IN), DIMENSION(1:no_of_eq) :: pr_in
-
-! Output fluxes !
-REAL*8, INTENT (OUT), DIMENSION(1:no_of_eq) :: f_out
-
-! local conservative variables  
-REAL*8, DIMENSION(1:no_of_eq) :: ul
-REAL*8, DIMENSION(1:no_of_eq) :: ur
-
-! local fluxes
-REAL*8, DIMENSION(1:no_of_eq) :: fl
-REAL*8, DIMENSION(1:no_of_eq) :: fr
+! Location index !
+INTEGER, INTENT (IN) :: j_in, k_in, l_in
 
 ! Signal speeds !
 REAL*8 :: sL, sR
@@ -77,11 +66,12 @@ REAL*8 :: ubar, cbar
 INTEGER :: i
 INTEGER :: ivn
 INTEGER :: ibn, ibt1, ibt2
-  
+
 !***********************************************************************************!
 
 ! Assign !
 select case(dir_in)
+!**************************************!
 case(x_dir)
   ibn = ibx 
   ibt1 = iby
@@ -97,43 +87,42 @@ case(z_dir)
   ibt1 = ibx
   ibt2 = iby
   ivn = ivz
+!**************************************!
 end select
   
 !***********************************************************************************!
 
 ! Find epsilon !
-CALL EOS_EPSILON (pl_in(irho), pl_in(itau), epsL)
-CALL EOS_EPSILON (pr_in(irho), pr_in(itau), epsR)
-
-! First, compute conservative variables !
-CALL P_to_U(pl_in, pl_in(ibx:ibz), epsL, ul)
-CALL P_to_U(pr_in, pr_in(ibx:ibz), epsR, ur)
-
-! Then, compute local fluxes !
-CALL P_to_flux(dir_in,pl_in,pl_in(ibx:ibz),ul,fl)
-CALL P_to_flux(dir_in,pr_in,pr_in(ibx:ibz),ur,fr)
+CALL EOS_EPSILON (primL(itau, j_in, k_in, l_in), primL(irho, j_in, k_in, l_in), epsL)
+CALL EOS_EPSILON (primR(itau, j_in, k_in, l_in), primR(irho, j_in, k_in, l_in), epsR)
 
 ! Find the sound speed !
-CALL EOS_SOUNDSPEED (pl_in(itau), pl_in(irho), csL)
-CALL EOS_SOUNDSPEED (pr_in(itau), pr_in(irho), csR)
+CALL EOS_SOUNDSPEED (primL(itau, j_in, k_in, l_in), primL(irho, j_in, k_in, l_in), epsL, csL)
+CALL EOS_SOUNDSPEED (primR(itau, j_in, k_in, l_in), primR(irho, j_in, k_in, l_in), epsR, csR)
+
+! First, compute conservative variables !
+CALL P_to_U_face(j_in, k_in, l_in, epsL, epsR)
+
+! Then, compute local fluxes !
+CALL P_to_flux(dir_in, j_in, k_in, l_in)
 
 ! Signal speed !
-cfsL = compute_signalspeed(csL, pl_in(ibn), pl_in(ibt1), pl_in(ibt2), pl_in(irho))
-cfsR = compute_signalspeed(csR, pr_in(ibn), pr_in(ibt1), pr_in(ibt2), pr_in(irho))
-ubar = compute_roe(pl_in(ivn),pr_in(ivn),pl_in(irho),pr_in(irho))
-cbar = compute_roe(cfsL,cfsR,pl_in(irho),pr_in(irho))
-sL = min(pl_in(ivn) - cfsL, ubar - cbar)
-sR = max(pr_in(ivn) + cfsR, ubar + cbar)
+cfsL = compute_signalspeed(csL, primL(ibn, j_in, k_in, l_in), primL(ibt1, j_in, k_in, l_in), primL(ibt2, j_in, k_in, l_in), primL(irho, j_in, k_in, l_in))
+cfsR = compute_signalspeed(csR, primR(ibn, j_in, k_in, l_in), primR(ibt1, j_in, k_in, l_in), primR(ibt2, j_in, k_in, l_in), primR(irho, j_in, k_in, l_in))
+ubar = compute_roe(primL(ivn, j_in, k_in, l_in),primR(ivn, j_in, k_in, l_in),primL(irho, j_in, k_in, l_in),primR(irho, j_in, k_in, l_in))
+cbar = compute_roe(cfsL,cfsR,primL(irho, j_in, k_in, l_in),primR(irho, j_in, k_in, l_in))
+sL = min(primL(ivn, j_in, k_in, l_in) - cfsL, ubar - cbar)
+sR = max(primR(ivn, j_in, k_in, l_in) + cfsR, ubar + cbar)
 
 ! Find the flux !
 IF(sL >= 0.0D0) THEN
-  f_out(imin:imax) = fl(imin:imax)
+  flux(imin:imax, j_in, k_in, l_in) = fluxL(imin:imax, j_in, k_in, l_in)
 ELSEIF(sL <= 0.0D0 .AND. sR >= 0.0D0) THEN
   DO i = imin, imax
-    f_out(i) = compute_fluxhll(fl(i),fr(i),uL(i),uR(i),sL,sR)
+    flux(i, j_in, k_in, l_in) = compute_fluxhll(fluxL(i,j_in,k_in,l_in), fluxR(i,j_in,k_in,l_in), consL(i,j_in,k_in,l_in), consR(i,j_in,k_in,l_in), sL, sR) 
   END DO
 ELSEIF(sR <= 0.0D0) THEN
-  f_out(imin:imax) = fr(imin:imax)
+  flux(imin:imax, j_in, k_in, l_in) = fluxR(imin:imax, j_in, k_in, l_in)
 END IF
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

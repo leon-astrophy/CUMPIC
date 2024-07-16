@@ -257,6 +257,7 @@ USE DEFINITION
 IMPLICIT NONE
 include "mpif.h"
 
+!$acc host_data use_device(prim, bcell)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Send my last NG cell to my right neighbour's ghost cell !
@@ -288,6 +289,103 @@ CALL MPI_Sendrecv(bcell(ibx,1,1,1), 1, bcell_type(3), neighbors(1,1,0), 0, &
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$acc end host_data
+
+END SUBROUTINE
+
+!----------------------------------------------------------------------
+!
+! This subroutine finialize transfer message from active cell to ghost
+! cell across MPI processes along the y-direction
+!
+!----------------------------------------------------------------------
+
+SUBROUTINE MPI_BOUNDARYP_Y
+USE DEFINITION
+IMPLICIT NONE
+include "mpif.h"
+
+!$acc host_data use_device(prim, bcell)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(prim(1,-2,NY-NGHOST+1,0), 1, face_type(2), neighbors(1,2,1), 0, &
+                  prim(1,-2,1-NGHOST,0), 1, face_type(2), neighbors(1,0,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(prim(1,-2,1,0), 1, face_type(2), neighbors(1,0,1), 0, &
+                  prim(1,-2,NY+1,0), 1, face_type(2), neighbors(1,2,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Do the same for cell-centered magnetic field !
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(bcell(ibx,-2,NY-NGHOST+1,1), 1, bcell_type(2), neighbors(1,2,1), 0, &
+                  bcell(ibx,-2,1-NGHOST,1), 1, bcell_type(2), neighbors(1,0,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(bcell(ibx,-2,1,1), 1, bcell_type(2), neighbors(1,0,1), 0, &
+                  bcell(ibx,-2,NY+1,1), 1, bcell_type(2), neighbors(1,2,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$acc end host_data
+
+END SUBROUTINE
+
+!----------------------------------------------------------------------
+!
+! This subroutine finialize transfer message from active cell to ghost
+! cell across MPI processes along the z-direction
+!
+!----------------------------------------------------------------------
+
+SUBROUTINE MPI_BOUNDARYP_Z
+USE DEFINITION
+IMPLICIT NONE
+include "mpif.h"
+
+!$acc host_data use_device(prim, bcell)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(prim(1,NZ-NGHOST+1,-2,-2), 1, face_type(1), neighbors(2,1,1), 0, &
+                  prim(1,1-NGHOST,-2,-2), 1, face_type(1), neighbors(0,1,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(prim(1,1,-2,-2), 1, face_type(1), neighbors(0,1,1), 0, &
+                  prim(1,NZ+1,-2,-2), 1, face_type(1), neighbors(2,1,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Do the same for cell-centered magnetic field !
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(bcell(ibx,NZ-NGHOST+1,-2,-2), 1, bcell_type(1), neighbors(2,1,1), 0, &
+                  bcell(ibx,1-NGHOST,-2,-2), 1, bcell_type(1), neighbors(0,1,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(bcell(ibx,1,-2,-2), 1, bcell_type(1), neighbors(0,1,1), 0, &
+                  bcell(ibx,NZ+1,-2,-2), 1, bcell_type(1), neighbors(2,1,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$acc end host_data
 
 END SUBROUTINE
 
@@ -307,6 +405,7 @@ include "mpif.h"
 ! Input/Output array
 REAL*8, INTENT (IN), DIMENSION (1-NGHOST:NX+3,1-NGHOST:NY+3,1-NGHOST:NZ+3) :: array
 
+!$acc host_data use_device(array)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Send my last NG cell to my right neighbour's ghost cell !
@@ -323,7 +422,82 @@ CALL MPI_Sendrecv(array(1,1,1), 1, scalar_type(3), neighbors(1,1,0), 0, &
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$acc end host_data
 
+END SUBROUTINE
+
+!----------------------------------------------------------------------
+!
+! This subroutine finialize transfer message from active cell to ghost
+! cell across MPI processes along the y-direction, for non-primitive
+! 3D arrays
+!
+!----------------------------------------------------------------------
+
+SUBROUTINE MPI_BOUNDARY_Y(array)
+USE DEFINITION
+IMPLICIT NONE
+include "mpif.h"
+
+! Input/Output array
+REAL*8, INTENT (IN), DIMENSION (1-NGHOST:NX+3,1-NGHOST:NY+3,1-NGHOST:NZ+3) :: array
+
+!$acc host_data use_device(array)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(array(-2,NY-NGHOST+1,1), 1, scalar_type(2), neighbors(1,2,1), 0, &
+                  array(-2,1-NGHOST,1), 1, scalar_type(2), neighbors(1,0,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(array(-2,1,1), 1, scalar_type(2), neighbors(1,2,1), 0, &
+                  array(-2,NY+1,1), 1, scalar_type(2), neighbors(1,0,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$acc end host_data
+
+END SUBROUTINE
+
+!----------------------------------------------------------------------
+!
+! This subroutine finialize transfer message from active cell to ghost
+! cell across MPI processes along the y-direction, for non-primitive
+! 3D arrays
+!
+!----------------------------------------------------------------------
+
+SUBROUTINE MPI_BOUNDARY_Z(array)
+USE DEFINITION
+IMPLICIT NONE
+include "mpif.h"
+
+! Input/Output array
+REAL*8, INTENT (IN), DIMENSION (1-NGHOST:NX+3,1-NGHOST:NY+3,1-NGHOST:NZ+3) :: array
+
+!$acc host_data use_device(array)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Send my last NG cell to my right neighbour's ghost cell !
+! Receive my left neighbour's last NG cell to my ghost cell !
+CALL MPI_Sendrecv(array(NY-NGHOST+1,-2,-2), 1, scalar_type(1), neighbors(2,1,1), 0, &
+                  array(1-NGHOST,-2,-2), 1, scalar_type(1), neighbors(0,1,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+
+! Send my first NG cell to my left neighbour's ghost cell !
+! Receive my right neighbour's first NG cell to my ghost cell !
+CALL MPI_Sendrecv(array(1,-2,-2), 1, scalar_type(1), neighbors(2,1,1), 0, &
+                  array(NY+1,-2,-2), 1, scalar_type(1), neighbors(0,1,1), 0, & 
+                  new_comm, MPI_STATUS_IGNORE, ierror)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!$acc end host_data
+                  
 END SUBROUTINE
 
 !***************************************************************************************************************************!

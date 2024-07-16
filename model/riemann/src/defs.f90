@@ -11,7 +11,7 @@ SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Adiabatic index !
-REAL*8, PARAMETER :: ggas = 2.0d0
+REAL*8, PARAMETER :: ggas = 5.0d0/3.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Define Riemann Problem Test !
@@ -23,7 +23,7 @@ INTEGER, PARAMETER :: mhd_rotor = 3
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Which test model? 
-INTEGER, PARAMETER :: riemann_test = brio_wu
+INTEGER, PARAMETER :: riemann_test = mhd_rotor
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

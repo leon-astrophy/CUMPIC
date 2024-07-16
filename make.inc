@@ -6,11 +6,9 @@
 # section for Fortran compiler #
 
 # MPI fortran #
-F90 = /home/leon/HDF5-MPIFORT/bin/h5pfc
+F90 = nvfortran #/home/leon/HDF5/bin/h5fc
 PARALLEL = -DMPI
-
-# The usual gfortran
-#F90 = gfortran
+USEHDF5 = -DUSEHF5
 
 ######################################################
 # Section for GPU #
@@ -34,12 +32,12 @@ PARALLEL = -DMPI
 # these are for standard gcc
 
 # Define F90 flags #
-F90FLAGS= -cpp -Ofast -O3 -march=native -mtune=native -flto -funroll-loops \
-          -ffp-contract=fast -ftree-vectorize -fprefetch-loop-arrays \
-	        -ffree-line-length-none $(PARALLEL) $(HDF5) $(MULTICORE) $(COMPILE) $(MATHPACK)
+F90FLAGS= -cpp -DGPU -acc #-Ofast -O3 -march=native -mtune=native -flto -funroll-loops \
+          #-ffp-contract=fast -ftree-vectorize -fprefetch-loop-arrays \
+	        #-ffree-line-length-none $(PARALLEL) $(MULTICORE) $(COMPILE) $(MATHPACK)
 
-LDFLAGS= -cpp -Ofast -O3 -march=native -mtune=native -flto -funroll-loops \
-         -ffp-contract=fast -ftree-vectorize -fprefetch-loop-arrays \
-         -ffree-line-length-none $(PARALLEL) $(HDF5) $(MULTICORE) $(COMPILE) $(MATHPACK)     
+LDFLAGS= -cpp -DGPU -acc #-Ofast -O3 -march=native -mtune=native -flto -funroll-loops \
+         #-ffp-contract=fast -ftree-vectorize -fprefetch-loop-arrays \
+         #-ffree-line-length-none $(PARALLEL) $(MULTICORE) $(COMPILE) $(MATHPACK)     
           
 ######################################################

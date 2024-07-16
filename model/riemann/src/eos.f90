@@ -4,48 +4,51 @@
 ! evolution. It is being used in every time step, do not confused it !
 ! with subroutine GETRHOEOSRTOP                                      !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE FINDPRESSURE
+SUBROUTINE EOS_PRESSURE (j_in, k_in, l_in, rho_in, eps_in, p_out)
+!$ACC ROUTINE SEQ
 USE DEFINITION
 USE PARAMETER
 IMPLICIT NONE
 
-! Integer !
-INTEGER :: i, j, k, l
+! Input !
+INTEGER, INTENT (IN) :: j_in, k_in, l_in
 
-!--------------------------------------------------------------------------------------
+! Input density !
+REAL*8, INTENT (IN) :: rho_in, eps_in
 
-! The following steps are more or less similar , so no repeat 
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
-DO l = 1 - NGHOST, nz + NGHOST
-  DO k = 1 - NGHOST, ny + NGHOST
-    DO j = 1 - NGHOST, nx + NGHOST
-      prim(itau,j,k,l) = prim(irho,j,k,l)*eps(j,k,l)*(ggas - 1.0D0) 
-    END DO
-  END DO
-END DO
-!$ACC END PARALLEL
+! Output value !
+REAL*8, INTENT (OUT) :: p_out
 
-!--------------------------------------------------------------------------------------
+!-----------------------------------------------------!
+
+! find pressure !
+p_out = rho_in*eps_in*(ggas-1.0d0)
+
+!------------------------------------------------------!
 
 END SUBROUTINE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! This subroutine finds the speed of sound !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE EOS_SOUNDSPEED (p_in, rho_in, cs_out)
+SUBROUTINE EOS_SOUNDSPEED (p_in, rho_in, eps_in, cs_out)
 !$ACC ROUTINE SEQ
 USE DEFINITION
 USE PARAMETER
 IMPLICIT NONE
 
 ! Input density !
-REAL*8, INTENT (IN) :: p_in, rho_in
+REAL*8, INTENT (IN) :: p_in, rho_in, eps_in
 
 ! Output value !
 REAL*8, INTENT (OUT) :: cs_out
 
+!-----------------------------------------------------!
+
 ! We do the DM case first !
 cs_out = DSQRT(ggas*p_in/rho_in)
+
+!-----------------------------------------------------!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -54,20 +57,24 @@ END SUBROUTINE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! This subroutine finds the specific internal energy !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE EOS_EPSILON (rho_in, p_in, eps_out)
+SUBROUTINE EOS_EPSILON (p_in, rho_in, eps_out)
 !$ACC ROUTINE SEQ
 USE DEFINITION
 USE PARAMETER
 IMPLICIT NONE
 
 ! Input density !
-REAL*8, INTENT (IN) :: rho_in, p_in
+REAL*8, INTENT (IN) :: p_in, rho_in
 
 ! Output value ! 
 REAL*8, INTENT (OUT) :: eps_out
 
+!-----------------------------------------------------!
+
 ! For DM Output !
 eps_out = p_in/rho_in/(ggas - 1.0D0)
+
+!-----------------------------------------------------!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

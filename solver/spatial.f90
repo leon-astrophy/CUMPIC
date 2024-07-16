@@ -73,6 +73,7 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE GET_SOURCE
+!$ACC ROUTINE (GEOM_SOURCE) SEQ
 USE DEFINITION 
 IMPLICIT NONE
 
@@ -88,7 +89,7 @@ DO l = 1, nz
 			DO i = imin, imax
 				
 				! Call warpper for computing geometric sources !
-				CALL GEOM_SOURCE(j, k, l, prim(:,j,k,l), bcell(:,j,k,l), sc(:,j,k,l))
+				CALL GEOM_SOURCE(j, k, l)
 
 			END DO
 		END DO
@@ -110,6 +111,9 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE GET_FLUXES
+!$ACC ROUTINE (GEOM_FLUX) SEQ
+!$ACC ROUTINE (INTERPOLATE) SEQ
+!$ACC ROUTINE (RIEMANN) SEQ
 USE DEFINITION 
 IMPLICIT NONE
 
@@ -131,14 +135,14 @@ DO l = 0, nz + 1
 
 			! Core hydrodynamic variables !
 			DO i = imin, ibx - 1
-				CALL INTERPOLATE (x_dir, j, k, l, prim(i,j-2:j+2,k,l), primR(i,j-1,k,l), primL(i,j,k,l))
+				CALL INTERPOLATE (x_dir, j, k, l, prim(i,j-2,k,l), prim(i,j-1,k,l), prim(i,j,k,l), prim(i,j+1,k,l), prim(i,j+2,k,l), primR(i,j-1,k,l), primL(i,j,k,l))
 			END DO
 
 			! Extra scalar !
 
 			! Cell center magnetic fields !
-			CALL INTERPOLATE (x_dir, j, k, l, bcell(iby,j-2:j+2,k,l), primR(iby,j-1,k,l), primL(iby,j,k,l))
-			CALL INTERPOLATE (x_dir, j, k, l, bcell(ibz,j-2:j+2,k,l), primR(ibz,j-1,k,l), primL(ibz,j,k,l))
+			CALL INTERPOLATE (x_dir, j, k, l, bcell(iby,j-2,k,l), bcell(iby,j-1,k,l), bcell(iby,j,k,l), bcell(iby,j+1,k,l), bcell(iby,j+2,k,l), primR(iby,j-1,k,l), primL(iby,j,k,l))
+			CALL INTERPOLATE (x_dir, j, k, l, bcell(ibz,j-2,k,l), bcell(ibz,j-1,k,l), bcell(ibz,j,k,l), bcell(ibz,j+1,k,l), bcell(ibz,j+2,k,l), primR(ibz,j-1,k,l), primL(ibz,j,k,l))
 				
 			! Special treatment for normal field 
 			primR(ibx,j-1,k,l) = prim(ibx,j-1,k,l)
@@ -156,7 +160,7 @@ DO l = 0, nz + 1
 		DO j = 0, nx
 
 			! Core hydrodynamic variables !
-			CALL RIEMANN (x_dir, primL(imin:imax,j,k,l), primR(imin:imax,j,k,l), flux(imin:imax,j,k,l))
+			CALL RIEMANN (x_dir, j, k, l) 
 
 		END DO
 	END DO
@@ -164,7 +168,7 @@ END DO
 !$ACC END PARALLEL
 
 ! Add the flux difference into the l-operator
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT) PRIAVTE(geom_flux_p, geom_flux_c, geom_flux_m)
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT) PRIVATE(geom_flux_p, geom_flux_c, geom_flux_m)
 DO l = 1, nz
 	DO k = 1, ny
 		DO j = 1, nx
@@ -200,7 +204,6 @@ END DO
 !==============================================================================================================!
 
 ! Then loop through the y-direction
-!IF(NY > 1) THEN 
 !--------------------------------------------------------------------------------------------------------------!
 ! Interpolate to get L/R state !
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
@@ -210,14 +213,14 @@ DO l = 0, nz + 1
 
 			! Core hydrodynamic variables !
 			DO i = imin, ibx - 1
-				CALL INTERPOLATE (y_dir, j, k, l, prim(i,j,k-2:k+2,l), primR(i,j,k-1,l), primL(i,j,k,l))
+				CALL INTERPOLATE (y_dir, j, k, l, prim(i,j,k-2,l), prim(i,j,k-1,l), prim(i,j,k,l), prim(i,j,k+1,l), prim(i,j,k+2,l), primR(i,j,k-1,l), primL(i,j,k,l))
 			END DO
 
 			! Extra scalar !
 
 			! Cell center magnetic fields !
-			CALL INTERPOLATE (y_dir, j, k, l, bcell(ibx,j,k-2:k+2,l), primR(ibx,j,k-1,l), primL(ibx,j,k,l))
-			CALL INTERPOLATE (y_dir, j, k, l, bcell(ibz,j,k-2:k+2,l), primR(ibz,j,k-1,l), primL(ibz,j,k,l))
+			CALL INTERPOLATE (y_dir, j, k, l, bcell(ibx,j,k-2,l), bcell(ibx,j,k-1,l), bcell(ibx,j,k,l), bcell(ibx,j,k+1,l), bcell(ibx,j,k+2,l), primR(ibx,j,k-1,l), primL(ibx,j,k,l))
+			CALL INTERPOLATE (y_dir, j, k, l, bcell(ibz,j,k-2,l), bcell(ibz,j,k-1,l), bcell(ibz,j,k,l), bcell(ibz,j,k+1,l), bcell(ibz,j,k+2,l), primR(ibz,j,k-1,l), primL(ibz,j,k,l))
 
 			! Special treatment for normal field 
 			primR(iby,j,k-1,l) = prim(iby,j,k-1,l)
@@ -235,7 +238,7 @@ DO l = 0, nz + 1
 		DO j = 0, nx + 1
 
 			! Core hydrodynamic variables !
-			CALL RIEMANN (y_dir, primL(imin:imax,j,k,l), primR(imin:imax,j,k,l), flux(imin:imax,j,k,l))
+			CALL RIEMANN (y_dir, j, k, l)
 
 		END DO
 	END DO
@@ -243,7 +246,7 @@ END DO
 !$ACC END PARALLEL
 
 ! Add the flux difference into the l-operator
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT) PRIAVTE(geom_flux_p, geom_flux_c, geom_flux_m)
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT) PRIVATE(geom_flux_p, geom_flux_c, geom_flux_m)
 DO l = 1, nz
 	DO k = 1, ny
 		DO j = 1, nx
@@ -277,10 +280,8 @@ DO l = 0, nz
 END DO
 !$ACC END PARALLEL
 !==============================================================================================================!
-!END IF
 
 ! Finally loop through the z-direction
-!IF(NZ > 1) THEN 
 !--------------------------------------------------------------------------------------------------------------!
 ! Interpolate to get L/R state !
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
@@ -290,14 +291,14 @@ DO l = 0, nz + 1
 			
 			! Core hydrodynamic variables !
 			DO i = imin, ibx - 1
-				CALL INTERPOLATE (z_dir, j, k, l, prim(i,j,k,l-2:l+2), primR(i,j,k,l-1), primL(i,j,k,l))
+				CALL INTERPOLATE (z_dir, j, k, l, prim(i,j,k,l-2), prim(i,j,k,l-1), prim(i,j,k,l), prim(i,j,k,l+1), prim(i,j,k,l+2), primR(i,j,k,l-1), primL(i,j,k,l))
 			END DO
 
 			! Extra scalar !
 
 			! Cell center magnetic fields !
-			CALL INTERPOLATE (z_dir, j, k, l, bcell(ibx,j,k,l-2:l+2), primR(ibx,j,k,l-1), primL(ibx,j,k,l))
-			CALL INTERPOLATE (z_dir, j, k, l, bcell(iby,j,k,l-2:l+2), primR(iby,j,k,l-1), primL(iby,j,k,l))
+			CALL INTERPOLATE (z_dir, j, k, l, bcell(ibx,j,k,l-2), bcell(ibx,j,k,l-1), bcell(ibx,j,k,l), bcell(ibx,j,k,l+1), bcell(ibx,j,k,l+2), primR(ibx,j,k,l-1), primL(ibx,j,k,l))
+			CALL INTERPOLATE (z_dir, j, k, l, bcell(iby,j,k,l-2), bcell(iby,j,k,l-1), bcell(iby,j,k,l), bcell(iby,j,k,l+1), bcell(iby,j,k,l+2), primR(iby,j,k,l-1), primL(iby,j,k,l))
 
 			! Special treatment for normal field 
 			primR(ibz,j,k,l-1) = prim(ibz,j,k,l-1)
@@ -315,7 +316,7 @@ DO l = 0, nz
 		DO j = 0, nx + 1
 
 			! Core hydrodynamic variables !
-			CALL RIEMANN (z_dir, primL(imin:imax,j,k,l), primR(imin:imax,j,k,l), flux(imin:imax,j,k,l))
+			CALL RIEMANN (z_dir, j, k, l)
 
 		END DO
 	END DO
@@ -323,7 +324,7 @@ END DO
 !$ACC END PARALLEL
 
 ! Add the flux difference into the l-operator
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT) PRIAVTE(geom_flux_p, geom_flux_c, geom_flux_m)
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(4) DEFAULT(PRESENT) PRIVATE(geom_flux_p, geom_flux_c, geom_flux_m)
 DO l = 1, nz
 	DO k = 1, ny
 		DO j = 1, nx
@@ -357,7 +358,6 @@ DO l = 0, nz
 END DO
 !$ACC END PARALLEL
 !--------------------------------------------------------------------------------------------------------------!
-!ENDIF
 
 ! At the end, add source terms !
 !--------------------------------------------------------------------------------------------------------------!
@@ -376,92 +376,5 @@ END DO
 !==============================================================================================================!
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-END SUBROUTINE
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!
-! Given a direction dir_in, a tuple (j,k,l), primitive and conservative variables
-! build the flux
-!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-SUBROUTINE P_to_flux(dir_in,prim_in,bcell_in,cons_in,flux_out)
-!$ACC ROUTINE SEQ
-USE DEFINITION 
-IMPLICIT NONE
-
-! Integer !
-INTEGER, INTENT(IN) :: dir_in
-
-! Input/Output array
-REAL*8, INTENT (IN), DIMENSION (ibx:ibz) :: bcell_in
-REAL*8, INTENT (IN), DIMENSION (1:no_of_eq) :: prim_in
-REAL*8, INTENT (IN), DIMENSION (1:no_of_eq) :: cons_in
-
-! Output !
-REAL*8, INTENT (OUT), DIMENSION (1:no_of_eq) :: flux_out
-
-! Integer !
-INTEGER :: i, j, k, l
-INTEGER :: ivn, ivt1, ivt2
-INTEGER :: ibn, ibt1, ibt2
-
-! Dummy !
-REAL*8 :: vsquare, bsquare, vdotb
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-! Assign !
-select case(dir_in)
-case(x_dir)
-	ivn = ivx
-	ivt1 = ivy
-	ivt2 = ivz
-	ibn = ibx
-	ibt1 = iby
-	ibt2 = ibz
-case(y_dir)
-	ivn = ivy
-	ivt1 = ivz
-	ivt2 = ivx
-	ibn = iby
-	ibt1 = ibz
-	ibt2 = ibx
-case(z_dir)
-	ivn = ivz
-	ivt1 = ivx
-	ivt2 = ivy
-	ibn = ibz
-	ibt1 = ibx
-	ibt2 = iby
-end select
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! Get flux !
-
-! get dot product !
-bsquare = dot_product(prim_in(ibx:ibz), prim_in(ibx:ibz))
-vsquare = dot_product(prim_in(ivx:ivz), prim_in(ivx:ivz))
-vdotb = dot_product(prim_in(ibx:ibz), prim_in(ivx:ivz))
-
-! First multiply by normal velocity !
-flux_out (imin:ibx-1) = cons_in (imin:ibx-1) * prim_in(ivn)
-
-! Add the pressure term to normal momentum equation !
-flux_out (ivn) = flux_out (ivn) + prim_in(itau) + 0.5D0*(bsquare) - prim_in(ibn)*prim_in(ibn)
-
-! Adjust the transverse momentum equation !
-flux_out(ivt1) = flux_out(ivt1) - prim_in(ibn)*prim_in(ibt1)
-flux_out(ivt2) = flux_out(ivt2) - prim_in(ibn)*prim_in(ibt2)
-
-! Add the presusre work done term to the energy equation             
-flux_out (itau) = flux_out (itau) + (prim_in(itau) + 0.5D0*(bsquare)) * prim_in(ivn) - prim_in(ibn)*vdotb
-
-! normal and transverse magnetic fields !
-flux_out(ibn) = 0.0D0
-flux_out(ibt1) = (prim_in(ivn)*prim_in(ibt1) - prim_in(ivt1)*prim_in(ibn))
-flux_out(ibt2) = (prim_in(ivn)*prim_in(ibt2) - prim_in(ivt2)*prim_in(ibn))
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE

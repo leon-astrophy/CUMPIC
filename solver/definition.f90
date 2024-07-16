@@ -6,7 +6,9 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 MODULE DEFINITION
+#ifdef USEHF5
 USE HDF5
+#endif
 IMPLICIT NONE
 SAVE
 
@@ -26,7 +28,7 @@ SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Number of CPUs along the first dimension
-INTEGER, PARAMETER :: NXCPU = 4
+INTEGER, PARAMETER :: NXCPU = 1
 
 ! Number of CPUs along the second dimension
 INTEGER, PARAMETER :: NYCPU = 1
@@ -92,8 +94,8 @@ REAL*8, PARAMETER :: y_end = 1.0d0
 REAL*8, PARAMETER :: z_end = 1.0d0
 
 ! The total number of grid in the x, y, z direction
-INTEGER, PARAMETER :: nxtot = 1000
-INTEGER, PARAMETER :: nytot = 1
+INTEGER, PARAMETER :: nxtot = 100
+INTEGER, PARAMETER :: nytot = 100
 INTEGER, PARAMETER :: nztot = 1
 
 ! Grid sizes for uniform grid 
@@ -111,7 +113,7 @@ INTEGER, PARAMETER :: nz = nztot/NZCPU
 REAL*8, PARAMETER :: cfl = 0.30D0			
 
 ! Maximum time to be simulated in the model
-REAL*8, PARAMETER :: total_time = 0.1d0
+REAL*8, PARAMETER :: total_time = 0.295d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Output setting
@@ -237,6 +239,14 @@ REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: cons
 REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: primL
 REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: primR
 
+! Conservative variables at the L/R of cell boundaries 
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: consL
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: consR
+
+! Fluxes at the L/R of cell boundaries 
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: fluxL
+REAL*8, ALLOCATABLE, DIMENSION (:,:,:,:) :: fluxR
+
 ! Epsilon !
 REAL*8, ALLOCATABLE, DIMENSION (:,:,:) :: eps
 
@@ -318,10 +328,28 @@ INTEGER, DIMENSION(0:2,0:2,0:2) :: neighbors
 ! HDF5 stuff !
 
 ! for HDF5 !
+#ifdef USEHF5
 integer :: error
 integer(HID_T) :: file_id, dset_id, plist_id, space_id, mem_id
+#endif
 
 !****************************************************************************************************!
+
+! Section for GPU !
+#ifdef GPU
+!$ACC declare create(no_of_eq)
+!$ACC declare create(imin, imax) 
+!$ACC declare create(irho, itau)
+!$ACC declare create(ivx, ivy, ivz)
+!$ACC declare create(ibx, iby, ibz)
+!$ACC declare create(xF, yF, zF)
+!$ACC declare create(primL, primR, flux)
+!$ACC declare create(consL, consR, eps)
+!$ACC declare create(prim, cons, bcell)
+!$ACC declare create(fluxL, fluxR)
+#endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 contains
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -330,7 +358,7 @@ contains
 
 	! dot product between two vectors !
 	REAL*8 function dot_product(vec_a, vec_b)
-	!$ACC routine seq
+	!$ACC ROUTINE SEQ
 	implicit none
 	REAL*8, DIMENSION (1:3) :: vec_a, vec_b
 	dot_product = vec_a(1)*vec_b(1) + vec_a(2)*vec_b(2) + vec_a(3)*vec_b(3)
@@ -347,7 +375,7 @@ contains
 	compute_hll = (sr*ur - sl*ul - (fr - fl))/(sr - sl)
 	end function
 	
-	REAL*8 function compute_fluxhll(yl,yr,xl,xr,sl,sr)
+	REAL*8 function compute_fluxhll(yl,yr,xl,xr,sl,sr)	
 	!$ACC ROUTINE SEQ
 	implicit none
 	REAL*8 :: yl, yr, xl, xr, sl, sr
