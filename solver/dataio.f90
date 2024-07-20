@@ -10,8 +10,8 @@ USE DEFINITION
 IMPLICIT NONE
 
 #ifdef MPI
-include "mpif.h"
-#endif
+include "mpif.h" 
+#endif 
 
 ! Characeter
 character(len=99) :: n_file
@@ -23,14 +23,6 @@ character(len=99) :: filename
 #ifdef GPU
 !$ACC UPDATE HOST(prim, eps)
 #endif
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-! MPI stuff !
-
-#ifdef MPI
-CALL MPI_COMM_SIZE(new_comm, mpi_size, ierror)
-CALL MPI_COMM_RANK(new_comm, mpi_rank, ierror)
-#endif 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Open file 

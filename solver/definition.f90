@@ -26,10 +26,10 @@ SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Number of CPUs along the first dimension
-INTEGER, PARAMETER :: NXCPU = 1
+INTEGER, PARAMETER :: NXCPU = 2
 
 ! Number of CPUs along the second dimension
-INTEGER, PARAMETER :: NYCPU = 1
+INTEGER, PARAMETER :: NYCPU = 2
 
 ! Number of CPUs along the third dimension
 INTEGER, PARAMETER :: NZCPU = 1

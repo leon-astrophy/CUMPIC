@@ -12,6 +12,8 @@ PROGRAM CUMC3D
 USE DEFINITION
 IMPLICIT NONE
 
+integer :: n
+
 ! Include MPI only if MPI is used !
 #ifdef MPI
 include "mpif.h" 
@@ -71,6 +73,13 @@ END IF
   stops(3) = starts(3) + nz
 #endif
 
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Section for GPU !
+
+#ifdef GPU
+CALL ASSIGN_DEVICE
+#endif
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Initial settings !
 
@@ -86,7 +95,6 @@ CALL initial_model
 ! Section for GPU !
 
 #ifdef GPU
-CALL ASSIGN_DEVICE
 CALL POPULATE_DEVICE
 #endif
 

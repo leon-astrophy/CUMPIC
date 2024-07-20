@@ -6,7 +6,7 @@ USE OPENACC
 USE DEFINITION
 IMPLICIT NONE
 
-#ifdef MPI && GPU
+#if MPI && GPU
 include "mpif.h" 
 !*******************************************************************!
 
