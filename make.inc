@@ -6,15 +6,17 @@
 # section for Fortran compiler #
 
 # MPI fortran #
-F90 = nvfortran #/home/leon/HDF5/bin/h5fc
-PARALLEL = -DMPI
-USEHDF5 = -DUSEHF5
+F90 = nvfortran
+
+# MPI fortran #
+#F90 = mpifort
+#PARALLEL = -DMPI
 
 ######################################################
 # Section for GPU #
 
 # Choose between CPU or GPU threading #
-#MULTICORE = -DGPU -fopenacc
+#MULTICORE = -DGPU -acc
 
 ######################################################
 # section for math packages #
@@ -32,12 +34,8 @@ USEHDF5 = -DUSEHF5
 # these are for standard gcc
 
 # Define F90 flags #
-F90FLAGS= -cpp -DGPU -acc #-Ofast -O3 -march=native -mtune=native -flto -funroll-loops \
-          #-ffp-contract=fast -ftree-vectorize -fprefetch-loop-arrays \
-	        #-ffree-line-length-none $(PARALLEL) $(MULTICORE) $(COMPILE) $(MATHPACK)
+F90FLAGS= -cpp -fast -O4 -Mconcur -Munroll -Mdalign -Mframe -Mlre -Mstack_arrays -Mvect=short -Mvect=prefetch -Mipa=fast,inline -Mvect=levels:4 -Mvect=fuse -Mvect=gather -Mvect=idiom -Mvect=altcode -Mvect=simd $(PARALLEL) $(MULTICORE) $(MATHPACK) $(COMPILE) 
 
-LDFLAGS= -cpp -DGPU -acc #-Ofast -O3 -march=native -mtune=native -flto -funroll-loops \
-         #-ffp-contract=fast -ftree-vectorize -fprefetch-loop-arrays \
-         #-ffree-line-length-none $(PARALLEL) $(MULTICORE) $(COMPILE) $(MATHPACK)     
+LDFLAGS= -cpp -fast -O4 -Mconcur -Munroll -Mdalign -Mframe -Mlre -Mstack_arrays -Mvect=short -Mvect=prefetch -Mipa=fast,inline -Mvect=levels:4 -Mvect=fuse -Mvect=gather -Mvect=idiom -Mvect=altcode -Mvect=simd $(PARALLEL) $(MULTICORE) $(MATHPACK) $(COMPILE)   
           
 ######################################################

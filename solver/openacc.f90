@@ -6,8 +6,7 @@ USE OPENACC
 USE DEFINITION
 IMPLICIT NONE
 
-#ifdef MPI
-#ifdef GPU
+#ifdef MPI && GPU
 include "mpif.h" 
 !*******************************************************************!
 
@@ -18,7 +17,6 @@ call MPI_COMM_RANK(new_comm, mpi_rank, ierror)
 call acc_set_device_num(mpi_rank, acc_get_device_type())
 
 !*******************************************************************!
-#endif
 #endif
 
 END SUBROUTINE

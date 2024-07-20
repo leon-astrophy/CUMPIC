@@ -5,9 +5,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE print_hydroprofile
-#ifdef USEHF5
 USE HDF5
-#endif
 USE DEFINITION
 IMPLICIT NONE
 
@@ -34,7 +32,6 @@ CALL MPI_COMM_SIZE(new_comm, mpi_size, ierror)
 CALL MPI_COMM_RANK(new_comm, mpi_rank, ierror)
 #endif 
 
-#ifdef USEHF5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Open file 
 
@@ -84,11 +81,9 @@ CALL h5pclose_f(plist_id, error)
 CALL h5close_f(error)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#endif
 
 END SUBROUTINE 
 
-#ifdef USEHF5
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
 ! This subroutine output scalar variables to the hdf5 file
@@ -342,4 +337,3 @@ CALL h5sclose_f(mem_id, error)
 !------------------------------------------------------------------------------------!
 
 END SUBROUTINE
-#endif

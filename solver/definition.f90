@@ -6,9 +6,7 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 MODULE DEFINITION
-#ifdef USEHF5
 USE HDF5
-#endif
 IMPLICIT NONE
 SAVE
 
@@ -328,10 +326,8 @@ INTEGER, DIMENSION(0:2,0:2,0:2) :: neighbors
 ! HDF5 stuff !
 
 ! for HDF5 !
-#ifdef USEHF5
 integer :: error
 integer(HID_T) :: file_id, dset_id, plist_id, space_id, mem_id
-#endif
 
 !****************************************************************************************************!
 
