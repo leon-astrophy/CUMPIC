@@ -103,14 +103,64 @@ END SUBROUTINE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE GEOM_SOURCE(j_in,k_in,l_in)
-!$ACC ROUTINE SEQ 
+!$ACC ROUTINE (GET_COORD) SEQ
+!$ACC ROUTINE (COORD_DX) SEQ
+!$ACC ROUTINE SEQ
 USE DEFINITION
 IMPLICIT NONE
 
 ! Input !
 INTEGER, INTENT(IN) :: j_in, k_in, l_in
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! Local !
+REAL*8 :: bsquare
+REAL*8 :: x_loc, y_loc, z_loc
+REAL*8 :: dx_loc, dy_loc, dz_loc
+
+!-----------------------------------------------------------------------------!
+! Pre compute, maybe can move it into each case to reduce computation !
+CALL GET_COORD(j_in,k_in,l_in,x_loc,y_loc,z_loc)
+CALL COORD_DX(j_in,k_in,l_in,dx_loc,dy_loc,dz_loc)
+
+select case(coordinate)
+!-----------------------------------------------------------------------------!
+case(cylindrical)
+	bsquare = dot_product(bcell(ibx:ibz,j_in,k_in,l_in),bcell(ibx:ibz,j_in,k_in,l_in))
+
+	sc(ivx,j_in,k_in,l_in) = sc(ivx,j_in,k_in,l_in) 
+												 + (prim(itau,j_in,k_in,l_in) + prim(irho,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) & 
+						   					 + 0.5D0*bsquare - bcell(iby,j_in,k_in,l_in)*bcell(iby,j_in,k_in,l_in))/(x_loc)										
+
+	sc(ivy,j_in,k_in,l_in) = sc(ivy,j_in,k_in,l_in) 
+												 - (prim(irho,j_in,k_in,l_in)*prim(ivx,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) & 
+												 - bcell(ibx,j_in,k_in,l_in)*bcell(iby,j_in,k_in,l_in))/(x_loc)
+
+!-----------------------------------------------------------------------------!
+case(spherical)
+	bsquare = dot_product(bcell(ibx:ibz,j_in,k_in,l_in),bcell(ibx:ibz,j_in,k_in,l_in))
+
+	sc(ivx,j_in,k_in,l_in) = sc(ivx,j_in,k_in,l_in) 
+												 + (2.0D0*prim(itau,j_in,k_in,l_in) + bcell(ibx,j_in,k_in,l_in)*bcell(ibx,j_in,k_in,l_in) &
+												 + prim(irho,j_in,k_in,l_in)*(prim(ivy,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) &
+												 + prim(ivz,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in)))/(x_loc)
+
+	sc(ivy,j_in,k_in,l_in) = sc(ivy,j_in,k_in,l_in) 
+												 + (prim(itau,j_in,k_in,l_in) + prim(irho,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in) &
+												 * prim(ivz,j_in,k_in,l_in) + 0.5D0*bsquare - bcell(ibz,j_in,k_in,l_in)*bcell(ibz,j_in,k_in,l_in)) &
+											 	 / (x_loc*DTAN(y_loc)) & 
+																			
+												 - (prim(irho,j_in,k_in,l_in)*prim(ivx,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) & 
+											 	 - bcell(ibx,j_in,k_in,l_in)*bcell(iby,j_in,k_in,l_in))/(x_loc) 
+
+	sc(ivz,j_in,k_in,l_in) = sc(ivz,j_in,k_in,l_in) 
+												 - (prim(irho,j_in,k_in,l_in)*prim(ivx,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in) & 
+												 - bcell(ibx,j_in,k_in,l_in)*bcell(ibz,j_in,k_in,l_in))/(x_loc)  & 
+
+												 - (prim(irho,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in) & 
+											   - bcell(iby,j_in,k_in,l_in)*bcell(ibz,j_in,k_in,l_in))/(x_loc*DTAN(y_loc))
+
+!-----------------------------------------------------------------------------!
+end select
 
 END SUBROUTINE
 
@@ -121,6 +171,7 @@ END SUBROUTINE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 SUBROUTINE GEOM_FLUX(dir_in,j_in,k_in,l_in,geom_flux_p,geom_flux_c,geom_flux_m)
+!$ACC ROUTINE (GET_COORD) SEQ
 !$ACC ROUTINE (COORD_DX) SEQ
 !$ACC ROUTINE SEQ
 USE DEFINITION
@@ -133,14 +184,19 @@ INTEGER, INTENT(IN) :: dir_in, j_in, k_in, l_in
 REAL*8, INTENT (OUT) :: geom_flux_p, geom_flux_c, geom_flux_m
 
 ! Local !
+REAL*8 :: x_loc, y_loc, z_loc
 REAL*8 :: dx_loc, dy_loc, dz_loc
+
+!-----------------------------------------------------------------------------!
+! Pre compute, maybe can move it into each case to reduce computation !
+CALL GET_COORD(j_in,k_in,l_in,x_loc,y_loc,z_loc)
+CALL COORD_DX(j_in,k_in,l_in,dx_loc,dy_loc,dz_loc)
 
 select case(coordinate)
 !-----------------------------------------------------------------------------!
 case(cartesian)
 	geom_flux_p = 1.0d0
 	geom_flux_m = 1.0d0
-  CALL COORD_DX(j_in,k_in,l_in,dx_loc,dy_loc,dz_loc)
   select case(dir_in)
 	case (x_dir)
 		geom_flux_c = dx_loc
@@ -149,7 +205,147 @@ case(cartesian)
 	case (z_dir)
 		geom_flux_c = dz_loc
 	end select
+!-----------------------------------------------------------------------------!
+case(cylindrical)
+  select case(dir_in)
+	case (x_dir)
+		geom_flux_p = xF(j_in)
+		geom_flux_m = xF(j_in-1)
+		geom_flux_c = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2) 
+	case (y_dir)
+		geom_flux_p = 1.0D0
+		geom_flux_m = 1.0D0
+		geom_flux_c = x_loc*dy_loc
+	case (z_dir)
+		geom_flux_p = 1.0D0
+		geom_flux_m = 1.0D0
+		geom_flux_c = dz_loc
+	end select
+!-----------------------------------------------------------------------------!
+case(spherical)
+  select case(dir_in)
+	case (x_dir)
+		geom_flux_p = xF(j_in)**2
+		geom_flux_m = xF(j_in-1)**2
+		geom_flux_c = (xF(j_in)**3 - xF(j_in-1)**3)/3.0d0
+	case (y_dir)
+		geom_flux_p = DSIN(yF(k_in))
+		geom_flux_m = DSIN(yF(k_in-1))
+		geom_flux_c = (2.0d0*(xF(j_in)**3 - xF(j_in-1)**3)/3.0d0/(xF(j_in)**2 - xF(j_in-1)**2))*(DCOS(yF(k_in-1)) - DCOS(yF(k_in)))
+	case (z_dir)
+		geom_flux_p = 1.0d0
+		geom_flux_m = 1.0d0
+		geom_flux_c = (2.0d0*(xF(j_in)**3 - xF(j_in-1)**3)/3.0d0/(xF(j_in)**2 - xF(j_in-1)**2))*(DCOS(yF(k_in-1)) - DCOS(yF(k_in)))*dz_loc/dy_loc
+	end select
+!-----------------------------------------------------------------------------!
+end select
 
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
+! Given index tuple (j,k,l), find the geometric factors in flux CT scheme
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SUBROUTINE GEOM_FLUX(j_in, k_in, l_in, g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, &
+g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p, g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, &
+g_bz_ey_c, g_bz_ey_p)
+!$ACC ROUTINE (GET_COORD) SEQ
+!$ACC ROUTINE (COORD_DX) SEQ
+!$ACC ROUTINE SEQ
+USE DEFINITION
+IMPLICIT NONE
+
+! Input !
+INTEGER, INTENT(IN) :: j_in, k_in, l_in
+
+! Output !
+REAL*8, INTENT (OUT) :: g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, &
+g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p, g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, &
+g_bz_ey_c, g_bz_ey_p
+
+!-----------------------------------------------------------------------------!
+! Pre compute, maybe can move it into each case to reduce computation !
+CALL GET_COORD(j_in,k_in,l_in,x_loc,y_loc,z_loc)
+CALL COORD_DX(j_in,k_in,l_in,dx_loc,dy_loc,dz_loc)
+
+select case(coordinate)
+!-----------------------------------------------------------------------------!
+case(cartesian)
+	g_bx_ez_m	= 1.0d0
+	g_bx_ez_c = dy_loc
+	g_bx_ez_p = 1.0d0
+
+	g_bx_ey_m	= 1.0d0
+	g_bx_ey_c = dz_loc
+	g_bx_ey_p = 1.0d0
+
+	g_by_ex_m	= 1.0d0
+	g_by_ex_c = dz_loc
+	g_by_ex_p = 1.0d0
+
+	g_by_ez_m	= 1.0d0
+	g_by_ez_c = dx_loc
+	g_by_ez_p = 1.0d0
+
+	g_bz_ey_m	= 1.0d0
+	g_bz_ey_c = dx_loc
+	g_bz_ey_p = 1.0d0
+
+	g_bz_ex_m	= 1.0d0
+	g_bz_ex_c = dy_loc
+	g_bz_ex_p = 1.0d0
+!-----------------------------------------------------------------------------!
+case(cylindrical)
+	g_bx_ez_m	= 1.0d0
+	g_bx_ez_c = dy_loc*xF(j_in)
+	g_bx_ez_p = 1.0d0
+
+	g_bx_ey_m	= 1.0d0
+	g_bx_ey_c = dz_loc
+	g_bx_ey_p = 1.0d0
+
+	g_by_ex_m	= 1.0d0
+	g_by_ex_c = dz_loc
+	g_by_ex_p = 1.0d0
+
+	g_by_ez_m	= 1.0d0
+	g_by_ez_c = dx_loc
+	g_by_ez_p = 1.0d0
+
+	g_bz_ey_m	= xF(j_in-1)
+	g_bz_ey_c = x_loc*dx_loc
+	g_bz_ey_p = xF(j_in)
+
+	g_bz_ex_m	= 1.0d0
+	g_bz_ex_c = x_loc*dy_loc
+	g_bz_ex_p = 1.0d0
+!-----------------------------------------------------------------------------!
+case(spherical)
+	g_bx_ez_m	= DSIN(yF(k_in-1))
+	g_bx_ez_c = xF(j_in)*(DCOS(yF(k_in-1)) - DCOS(yF(k_in)))
+	g_bx_ez_p = DSIN(yF(k_in))
+
+	g_bx_ey_m	= 1.0d0
+	g_bx_ey_c = xF(j_in)*(DCOS(yF(k_in-1)) - DCOS(yF(k_in)))*dz_loc/dy_loc
+	g_bx_ey_p = 1.0d0
+
+	g_by_ex_m	= 1.0d0
+	g_by_ex_c = x_loc*DSIN(yF(k_in))*dz_loc
+	g_by_ex_p = 1.0d0
+
+	g_by_ez_m	= xF(j_in-1)
+	g_by_ez_c = x_loc*dx_loc
+	g_by_ez_p = xF(j_in)
+
+	g_bz_ey_m	= xF(j_in-1)
+	g_bz_ey_c = x_loc*dx_loc
+	g_bz_ey_p = xF(j_in)
+
+	g_bz_ex_m	= 1.0d0
+	g_bz_ex_c = x_loc*dy_loc
+	g_bz_ex_p = 1.0d0
 !-----------------------------------------------------------------------------!
 end select
 

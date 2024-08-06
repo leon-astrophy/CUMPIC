@@ -42,6 +42,7 @@ IMPLICIT NONE
 ! Update device for variables defined in acc routine seq !
 !$ACC UPDATE DEVICE(no_of_eq, imin, imax) 
 !$ACC UPDATE DEVICE(irho, ivx, ivy, ivz, itau, ibx, iby, ibz)
+!$ACC UPDATE DEVICE(bcell, prim, sc)
 !$ACC UPDATE DEVICE(xF, yF, zF)
 !$ACC UPDATE DEVICE(primL, primR)
 !$ACC UPDATE DEVICE(consL, consR)

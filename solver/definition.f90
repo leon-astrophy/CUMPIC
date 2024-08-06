@@ -339,6 +339,7 @@ integer(HID_T) :: file_id, dset_id, plist_id, space_id, mem_id
 !$ACC declare create(ivx, ivy, ivz)
 !$ACC declare create(ibx, iby, ibz)
 !$ACC declare create(xF, yF, zF)
+!$ACC declare create(bcell, prim, sc)
 !$ACC declare create(primL, primR, flux)
 !$ACC declare create(consL, consR, eps)
 !$ACC declare create(prim, cons, bcell)

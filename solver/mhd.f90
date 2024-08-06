@@ -23,9 +23,12 @@ INTEGER :: j, k, l
 REAL*8 :: sum1, sum2 
 
 ! Real, geometric factor !
-REAL*8 :: geom_ecorn_x_m,  geom_ecorn_x_c, geom_ecorn_x_p
-REAL*8 :: geom_ecorn_y_m,  geom_ecorn_y_c, geom_ecorn_y_p
-REAL*8 :: geom_ecorn_z_m,  geom_ecorn_z_c, geom_ecorn_z_p
+REAL*8 :: g_bx_ez_m, g_bx_ez_c, g_bx_ez_p
+REAL*8 :: g_bx_ey_m, g_bx_ey_c, g_bx_ey_p
+REAL*8 :: g_by_ex_m, g_by_ex_c, g_by_ex_p
+REAL*8 :: g_by_ez_m, g_by_ez_c, g_by_ez_p
+REAL*8 :: g_bz_ex_m, g_bz_ex_c, g_bz_ex_p
+REAL*8 :: g_bz_ey_m, g_bz_ey_c, g_bz_ey_p
 
 !---------------------------------------------------------------------------------------------------------!
 
@@ -45,7 +48,7 @@ END DO
 !---------------------------------------------------------------------------------------------------------!
 
 ! upwind constrained transport !
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) 
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)
 DO l = 0, nz
   DO k = 0, ny
     DO j = 0, nx
@@ -65,19 +68,25 @@ END DO
 !---------------------------------------------------------------------------------------------------------!
 
 ! Update rungekutta operator !
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) 
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, &
+!$ACC g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p &
+!$ACC g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, g_bz_ey_c, g_bz_ey_p)
 DO l = 0, nz
   DO k = 0, ny
     DO j = 0, nx
 
+      ! Get geometric factor !
+      CALL GEOM_CT(j,k,l,g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, g_by_ex_m, g_by_ex_c, g_by_ex_p, &
+      g_by_ez_m, g_by_ez_c, g_by_ez_p, g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, g_bz_ey_c, g_bz_ey_p)
+
       ! dbx/dt !
-      l_rk(ibx,j,k,l) = - ((ecorn(iez,j,k,l) - ecorn(iez,j,k-1,l))/(dy) - (ecorn(iey,j,k,l) - ecorn(iey,j,k,l-1))/(dz))
+      l_rk(ibx,j,k,l) = - ((ecorn(iez,j,k,l)*g_bx_ez_p - ecorn(iez,j,k-1,l)*g_bx_ez_m)/g_bx_ez_c - (ecorn(iey,j,k,l)*g_bx_ey_p - ecorn(iey,j,k,l-1)*g_bx_ey_m)/g_bx_ey_c)
 
       ! dby/dt !
-      l_rk(iby,j,k,l) = - ((ecorn(iex,j,k,l) - ecorn(iex,j,k,l-1))/(dz) - (ecorn(iez,j,k,l) - ecorn(iez,j-1,k,l))/(dx))
+      l_rk(iby,j,k,l) = - ((ecorn(iex,j,k,l)*g_by_ex_p - ecorn(iex,j,k,l-1)*g_by_ex_m)/g_by_ex_c - (ecorn(iez,j,k,l)*g_by_ez_p - ecorn(iez,j-1,k,l)*g_by_ez_m)/g_by_ez_c)
 
       ! dbz/dt !
-      l_rk(ibz,j,k,l) = - ((ecorn(iey,j,k,l) - ecorn(iey,j-1,k,l))/(dx) - (ecorn(iex,j,k,l) - ecorn(iex,j,k-1,l))/(dy))
+      l_rk(ibz,j,k,l) = - ((ecorn(iey,j,k,l)*g_bz_ey_p - ecorn(iey,j-1,k,l)*g_bz_ey_m)/g_bz_ey_c - (ecorn(iex,j,k,l)*g_bz_ex_p - ecorn(iex,j,k-1,l)*g_bz_ex_m)/g_bz_ex_c)
 
     END DO
   END DO
