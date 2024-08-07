@@ -127,11 +127,11 @@ select case(coordinate)
 case(cylindrical)
 	bsquare = dot_product(bcell(ibx:ibz,j_in,k_in,l_in),bcell(ibx:ibz,j_in,k_in,l_in))
 
-	sc(ivx,j_in,k_in,l_in) = sc(ivx,j_in,k_in,l_in) 
+	sc(ivx,j_in,k_in,l_in) = sc(ivx,j_in,k_in,l_in) &
 												 + (prim(itau,j_in,k_in,l_in) + prim(irho,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) & 
 						   					 + 0.5D0*bsquare - bcell(iby,j_in,k_in,l_in)*bcell(iby,j_in,k_in,l_in))/(x_loc)										
 
-	sc(ivy,j_in,k_in,l_in) = sc(ivy,j_in,k_in,l_in) 
+	sc(ivy,j_in,k_in,l_in) = sc(ivy,j_in,k_in,l_in) &
 												 - (prim(irho,j_in,k_in,l_in)*prim(ivx,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) & 
 												 - bcell(ibx,j_in,k_in,l_in)*bcell(iby,j_in,k_in,l_in))/(x_loc)
 
@@ -139,12 +139,12 @@ case(cylindrical)
 case(spherical)
 	bsquare = dot_product(bcell(ibx:ibz,j_in,k_in,l_in),bcell(ibx:ibz,j_in,k_in,l_in))
 
-	sc(ivx,j_in,k_in,l_in) = sc(ivx,j_in,k_in,l_in) 
+	sc(ivx,j_in,k_in,l_in) = sc(ivx,j_in,k_in,l_in) &
 												 + (2.0D0*prim(itau,j_in,k_in,l_in) + bcell(ibx,j_in,k_in,l_in)*bcell(ibx,j_in,k_in,l_in) &
 												 + prim(irho,j_in,k_in,l_in)*(prim(ivy,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) &
 												 + prim(ivz,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in)))/(x_loc)
 
-	sc(ivy,j_in,k_in,l_in) = sc(ivy,j_in,k_in,l_in) 
+	sc(ivy,j_in,k_in,l_in) = sc(ivy,j_in,k_in,l_in) &
 												 + (prim(itau,j_in,k_in,l_in) + prim(irho,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in) &
 												 * prim(ivz,j_in,k_in,l_in) + 0.5D0*bsquare - bcell(ibz,j_in,k_in,l_in)*bcell(ibz,j_in,k_in,l_in)) &
 											 	 / (x_loc*DTAN(y_loc)) & 
@@ -152,7 +152,7 @@ case(spherical)
 												 - (prim(irho,j_in,k_in,l_in)*prim(ivx,j_in,k_in,l_in)*prim(ivy,j_in,k_in,l_in) & 
 											 	 - bcell(ibx,j_in,k_in,l_in)*bcell(iby,j_in,k_in,l_in))/(x_loc) 
 
-	sc(ivz,j_in,k_in,l_in) = sc(ivz,j_in,k_in,l_in) 
+	sc(ivz,j_in,k_in,l_in) = sc(ivz,j_in,k_in,l_in) &
 												 - (prim(irho,j_in,k_in,l_in)*prim(ivx,j_in,k_in,l_in)*prim(ivz,j_in,k_in,l_in) & 
 												 - bcell(ibx,j_in,k_in,l_in)*bcell(ibz,j_in,k_in,l_in))/(x_loc)  & 
 
@@ -248,7 +248,7 @@ END SUBROUTINE
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-SUBROUTINE GEOM_FLUX(j_in, k_in, l_in, g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, &
+SUBROUTINE GEOM_CT(j_in, k_in, l_in, g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, &
 g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p, g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, &
 g_bz_ey_c, g_bz_ey_p)
 !$ACC ROUTINE (GET_COORD) SEQ
@@ -264,6 +264,10 @@ INTEGER, INTENT(IN) :: j_in, k_in, l_in
 REAL*8, INTENT (OUT) :: g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, &
 g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p, g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, &
 g_bz_ey_c, g_bz_ey_p
+
+! Local !
+REAL*8 :: x_loc, y_loc, z_loc
+REAL*8 :: dx_loc, dy_loc, dz_loc
 
 !-----------------------------------------------------------------------------!
 ! Pre compute, maybe can move it into each case to reduce computation !
