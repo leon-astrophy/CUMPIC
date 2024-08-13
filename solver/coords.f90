@@ -211,7 +211,7 @@ case(cylindrical)
 	case (x_dir)
 		geom_flux_p = xF(j_in)
 		geom_flux_m = xF(j_in-1)
-		geom_flux_c = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2) 
+		geom_flux_c = x_loc*dx_loc !0.5d0*(xF(j_in)**2 - xF(j_in-1)**2) 
 	case (y_dir)
 		geom_flux_p = 1.0D0
 		geom_flux_m = 1.0D0

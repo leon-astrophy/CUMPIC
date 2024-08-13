@@ -160,6 +160,7 @@ END SUBROUTINE
 
 SUBROUTINE finddt
 !$ACC ROUTINE (EOS_SOUNDSPEED) SEQ
+!$ACC ROUTINE (GET_COORD) SEQ
 !$ACC ROUTINE (coord_dx) SEQ
 USE DEFINITION
 IMPLICIT NONE
@@ -184,6 +185,7 @@ REAL*8 :: cfx_mhd, cfy_mhd, cfz_mhd
 REAL*8 :: lambda, lambda1, lambda2, lambda3
 
 ! Local grid size !
+REAL*8 :: x_loc, y_loc, z_loc
 REAL*8 :: dx_loc, dy_loc, dz_loc
 
 ! Local minimum dt for DM, NM and 1st overlayer
@@ -229,7 +231,17 @@ DO l = 1, NZ
                         
 			! Find loca grid size !
 			CALL COORD_DX (j,k,l,dx_loc,dy_loc,dz_loc)
+			CALL GET_COORD(j,k,l,x_loc,y_loc,z_loc)
 
+			! Geometric factor !
+			select case(coordinate)
+			case(cylindrical)
+				dy_loc = x_loc*dy_loc
+			case(spherical)
+				dy_loc = x_loc*dy_loc
+				dz_loc = x_loc*DSIN(y_loc)*dz_loc
+			end select
+			
 			! Compute time step !
 			dt_out = MIN(dx_loc,dy_loc,dz_loc)*cfl/lambda
 			dt_temp = MIN(dt_out, dt_temp)
