@@ -6,11 +6,11 @@
 # section for Fortran compiler #
 
 # MPI fortran #
-F90 = /home/leon/HDF5-NVIDIA/bin/h5fc 
+F90 = /home/leon/HDF5-GPU/bin/h5pfc 
 
 # MPI fortran #
 #F90 = mpifort
-#PARALLEL = -DMPI
+PARALLEL = -DMPI
 
 ######################################################
 # Section for GPU #
@@ -28,7 +28,7 @@ F90 = /home/leon/HDF5-NVIDIA/bin/h5fc
 # Section for debug #
 
 # Want to look for compilation message? #
-COMPILE = -Minfo=accel
+#COMPILE = -Minfo=accel
 
 ######################################################
 # these are for standard gcc

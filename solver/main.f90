@@ -12,7 +12,8 @@ PROGRAM CUMC3D
 USE DEFINITION
 IMPLICIT NONE
 
-integer :: n
+integer :: n, j, k, l
+real*8 :: x_loc, y_loc, z_loc, dx_loc, dy_loc, dz_loc, div_b, maxdb
 
 ! Include MPI only if MPI is used !
 #ifdef MPI

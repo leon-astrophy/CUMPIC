@@ -358,15 +358,15 @@ include "mpif.h"
 
 ! Send my last NG cell to my right neighbour's ghost cell !
 ! Receive my left neighbour's last NG cell to my ghost cell !
-CALL MPI_Sendrecv(prim(1,NZ-NGHOST+1,-2,-2), 1, face_type(1), neighbors(2,1,1), 0, &
-                  prim(1,1-NGHOST,-2,-2), 1, face_type(1), neighbors(0,1,1), 0, & 
+CALL MPI_Sendrecv(prim(1,-2,-2,NZ-NGHOST+1), 1, face_type(1), neighbors(2,1,1), 0, &
+                  prim(1,-2,-2,1-NGHOST), 1, face_type(1), neighbors(0,1,1), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 
 ! Send my first NG cell to my left neighbour's ghost cell !
 ! Receive my right neighbour's first NG cell to my ghost cell !
-CALL MPI_Sendrecv(prim(1,1,-2,-2), 1, face_type(1), neighbors(0,1,1), 0, &
-                  prim(1,NZ+1,-2,-2), 1, face_type(1), neighbors(2,1,1), 0, & 
+CALL MPI_Sendrecv(prim(1,-2,-2,1), 1, face_type(1), neighbors(0,1,1), 0, &
+                  prim(1,-2,-2,NZ+1), 1, face_type(1), neighbors(2,1,1), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -374,14 +374,14 @@ CALL MPI_Sendrecv(prim(1,1,-2,-2), 1, face_type(1), neighbors(0,1,1), 0, &
 
 ! Send my last NG cell to my right neighbour's ghost cell !
 ! Receive my left neighbour's last NG cell to my ghost cell !
-CALL MPI_Sendrecv(bcell(ibx,NZ-NGHOST+1,-2,-2), 1, bcell_type(1), neighbors(2,1,1), 0, &
-                  bcell(ibx,1-NGHOST,-2,-2), 1, bcell_type(1), neighbors(0,1,1), 0, & 
+CALL MPI_Sendrecv(bcell(ibx,-2,-2,NZ-NGHOST+1), 1, bcell_type(1), neighbors(2,1,1), 0, &
+                  bcell(ibx,-2,-2,1-NGHOST), 1, bcell_type(1), neighbors(0,1,1), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 ! Send my first NG cell to my left neighbour's ghost cell !
 ! Receive my right neighbour's first NG cell to my ghost cell !
-CALL MPI_Sendrecv(bcell(ibx,1,-2,-2), 1, bcell_type(1), neighbors(0,1,1), 0, &
-                  bcell(ibx,NZ+1,-2,-2), 1, bcell_type(1), neighbors(2,1,1), 0, & 
+CALL MPI_Sendrecv(bcell(ibx,-2,-2,1), 1, bcell_type(1), neighbors(0,1,1), 0, &
+                  bcell(ibx,-2,-2,NZ+1), 1, bcell_type(1), neighbors(2,1,1), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -484,15 +484,15 @@ REAL*8, INTENT (IN), DIMENSION (1-NGHOST:NX+3,1-NGHOST:NY+3,1-NGHOST:NZ+3) :: ar
 
 ! Send my last NG cell to my right neighbour's ghost cell !
 ! Receive my left neighbour's last NG cell to my ghost cell !
-CALL MPI_Sendrecv(array(NY-NGHOST+1,-2,-2), 1, scalar_type(1), neighbors(2,1,1), 0, &
-                  array(1-NGHOST,-2,-2), 1, scalar_type(1), neighbors(0,1,1), 0, & 
+CALL MPI_Sendrecv(array(-2,-2,NZ-NGHOST+1), 1, scalar_type(1), neighbors(2,1,1), 0, &
+                  array(-2,-2,1-NGHOST), 1, scalar_type(1), neighbors(0,1,1), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 
 ! Send my first NG cell to my left neighbour's ghost cell !
 ! Receive my right neighbour's first NG cell to my ghost cell !
-CALL MPI_Sendrecv(array(1,-2,-2), 1, scalar_type(1), neighbors(2,1,1), 0, &
-                  array(NY+1,-2,-2), 1, scalar_type(1), neighbors(0,1,1), 0, & 
+CALL MPI_Sendrecv(array(-2,-2,1), 1, scalar_type(1), neighbors(2,1,1), 0, &
+                  array(-2,-2,NZ+1), 1, scalar_type(1), neighbors(0,1,1), 0, & 
                   new_comm, MPI_STATUS_IGNORE, ierror)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

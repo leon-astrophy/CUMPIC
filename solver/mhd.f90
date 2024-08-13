@@ -13,6 +13,7 @@
 !
 !***********************************************************************
 SUBROUTINE flux_ct
+!$ACC ROUTINE (GEOM_CT) SEQ
 USE DEFINITION
 IMPLICIT NONE
 
@@ -69,7 +70,7 @@ END DO
 
 ! Update rungekutta operator !
 !$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(g_bx_ez_m, g_bx_ez_c, g_bx_ez_p, &
-!$ACC g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p &
+!$ACC g_bx_ey_m, g_bx_ey_c, g_bx_ey_p, g_by_ex_m, g_by_ex_c, g_by_ex_p, g_by_ez_m, g_by_ez_c, g_by_ez_p, &
 !$ACC g_bz_ex_m, g_bz_ex_c, g_bz_ex_p, g_bz_ey_m, g_bz_ey_c, g_bz_ey_p)
 DO l = 0, nz
   DO k = 0, ny

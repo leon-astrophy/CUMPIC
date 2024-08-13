@@ -54,7 +54,18 @@ INTEGER :: i, j, k, l
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT)  
+!$ACC PARALLEL DEFAULT(PRESENT)
+!$ACC LOOP GANG WORKER VECTOR COLLAPSE(3) 
+DO l = -2, nz + 3
+  DO k = -2, ny + 3
+    DO j = 1, 3
+      prim(ivx,1-j,k,l) = MIN(prim(ivx,1-j,k,l), 0.0D0)
+      prim(ivx,nx+j,k,l) = MAX(prim(ivx,nx+j,k,l), 0.0D0)
+    END DO
+  END DO               
+ENDDO
+
+!$ACC LOOP GANG WORKER VECTOR COLLAPSE(3) 
 DO l = 1, 3
   DO k = -2, ny + 3
     DO j = -2, nx + 3
@@ -108,9 +119,49 @@ END SUBROUTINE
 ! Building custom equations !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 SUBROUTINE CUSTOM_SOURCE
+!$ACC ROUTINE (GET_COORD) SEQ
+!$ACC ROUTINE (COORD_DX) SEQ
 USE DEFINITION
 USE PARAMETER
 IMPLICIT NONE
+
+! Integer !
+INTEGER :: i, j, k, l
+
+! real !
+REAL*8 :: radius
+
+! Threshold for atmosphere density
+REAL*8 :: dphidr, dphidz
+REAL*8 :: factor, diff
+
+! Local !
+REAL*8 :: x_loc, y_loc, z_loc
+REAL*8 :: dx_loc, dy_loc, dz_loc
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+! Add black hole gravity !
+!$ACC PARALLEL LOOP GANG WORKER VECTOR COLLAPSE(3) DEFAULT(PRESENT) PRIVATE(radius, dphidr, dphidz, factor, diff)
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      CALL GET_COORD(j,k,l,x_loc,y_loc,z_loc)
+      CALL COORD_DX(j,k,l,dx_loc,dy_loc,dz_loc)
+      diff = prim(irho,j,k,l) - rho_floor
+      factor = MAX(SIGN(1.0D0, diff), 0.0D0)
+      radius = DSQRT(x_loc**2 + z_loc**2)
+      dphidr = x_loc/radius/((radius - r_sh)*(radius - r_sh))
+      dphidz = z_loc/radius/((radius - r_sh)*(radius - r_sh))
+      sc(ivx,j,k,l) = sc(ivx,j,k,l) + (-factor*prim(irho,j,k,l)*dphidr)
+      sc(ivz,j,k,l) = sc(ivz,j,k,l) + (-factor*prim(irho,j,k,l)*dphidz)
+      sc(itau,j,k,l) = sc(itau,j,k,l) + (-factor*prim(irho,j,k,l)*(prim(ivx,j,k,l)*dphidr + prim(ivz,j,k,l)*dphidz))
+    END DO
+  END DO
+END DO
+!$ACC END PARALLEL
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 END SUBROUTINE
 

@@ -10,6 +10,10 @@ USE DEFINITION
 USE PARAMETER
 IMPLICIT NONE
 
+#ifdef MPI
+include "mpif.h"
+#endif
+
 !---------------------------------------------------------
 
 ! Integer !
@@ -179,7 +183,7 @@ CALL MPI_Allreduce(pmag_max, pmag_max, 1, MPI_DOUBLE, MPI_MAX, new_comm, ierror)
 
 ! Assign beta !
 beta_loc = pgas_max/pmag_max
-norm = sqrt(beta_loc/beta_norm)
+norm = 0.0d0 !sqrt(beta_loc/beta_norm)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Scale the magnetic field !
@@ -238,16 +242,16 @@ eps_floor = k_poly*rho_floor**(ggas - 1.0)/(ggas - 1.0)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! perturb the torus !
-DO l = 1, nz
-  DO k = 1, ny
-    DO j = 1, nx
-      IF(prim(irho,j,k,l) > rho_floor) THEN
-        CALL RANDOM_NUMBER(rand_num)
-        prim(irho,j,k,l) = prim(irho,j,k,l) + prim(irho,j,k,l)*(rand_num - 0.5d0)/(0.5d0)*1.0d-4
-      END IF
-    END DO
-  END DO
-END DO
+!DO l = 1, nz
+!  DO k = 1, ny
+!    DO j = 1, nx
+!      IF(prim(irho,j,k,l) > rho_floor) THEN
+!        CALL RANDOM_NUMBER(rand_num)
+!        prim(irho,j,k,l) = prim(irho,j,k,l) + prim(irho,j,k,l)*(rand_num - 0.5d0)/(0.5d0)*1.0d-4
+!      END IF
+!    END DO
+!  END DO
+!END DO
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 

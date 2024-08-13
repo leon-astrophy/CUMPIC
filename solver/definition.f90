@@ -26,13 +26,13 @@ SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Number of CPUs along the first dimension
-INTEGER, PARAMETER :: NXCPU = 1
+INTEGER, PARAMETER :: NXCPU = 2
 
 ! Number of CPUs along the second dimension
 INTEGER, PARAMETER :: NYCPU = 1
 
 ! Number of CPUs along the third dimension
-INTEGER, PARAMETER :: NZCPU = 1
+INTEGER, PARAMETER :: NZCPU = 2
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Constant and universal values 
@@ -93,7 +93,7 @@ REAL*8, PARAMETER :: z_end = 5.0d0
 
 ! The total number of grid in the x, y, z direction
 INTEGER, PARAMETER :: nxtot = 128
-INTEGER, PARAMETER :: nytot = 128
+INTEGER, PARAMETER :: nytot = 1
 INTEGER, PARAMETER :: nztot = 128
 
 ! Grid sizes for uniform grid 
@@ -111,7 +111,7 @@ INTEGER, PARAMETER :: nz = nztot/NZCPU
 REAL*8, PARAMETER :: cfl = 0.30D0			
 
 ! Maximum time to be simulated in the model
-REAL*8, PARAMETER :: total_time = 1000.0d0
+REAL*8, PARAMETER :: total_time = 10.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Output setting
@@ -120,11 +120,11 @@ REAL*8, PARAMETER :: total_time = 1000.0d0
 
 ! Physical time interval for all log file
 REAL*8 :: output_logtime_last = 0.0D0
-REAL*8, PARAMETER :: output_logtime = 1.0D1                            
+REAL*8, PARAMETER :: output_logtime = 10.0d0                            
 
 ! Physical time interval for each hydro profile
 REAL*8 :: output_profiletime_last = 0.0D0
-REAL*8, PARAMETER :: output_profiletime = 0.05d0
+REAL*8, PARAMETER :: output_profiletime = 10.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for riemann solvers
@@ -165,7 +165,7 @@ INTEGER, PARAMETER :: PPMC = 4
 INTEGER, PARAMETER :: WENO = 5
 
 ! Define reconstruction method #
-INTEGER, PARAMETER :: RECON = TVDMM
+INTEGER, PARAMETER :: RECON = PPMC
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for rk3 time evolution 
