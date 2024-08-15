@@ -29,7 +29,7 @@ SAVE
 INTEGER, PARAMETER :: NXCPU = 2
 
 ! Number of CPUs along the second dimension
-INTEGER, PARAMETER :: NYCPU = 1
+INTEGER, PARAMETER :: NYCPU = 2
 
 ! Number of CPUs along the third dimension
 INTEGER, PARAMETER :: NZCPU = 2
@@ -53,6 +53,9 @@ REAL*8, PARAMETER :: small_num = TINY(1.0D0)
 ! Number of ghost shell !
 INTEGER, PARAMETER :: NGHOST = 3
 
+! Number of dimension !
+INTEGER, PARAMETER :: NDIM = 4
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Core part of the simulation box
 ! This is where the system variables are controled
@@ -62,9 +65,11 @@ INTEGER, PARAMETER :: NGHOST = 3
 INTEGER, PARAMETER :: cartesian = 1
 INTEGER, PARAMETER :: cylindrical = 2
 INTEGER, PARAMETER :: spherical = 3
+INTEGER, PARAMETER :: cartesian_ks = 4
+INTEGER, PARAMETER :: spherical_ks = 5
 
 ! Use which coordiante? !
-INTEGER, PARAMETER :: coordinate = cylindrical
+INTEGER, PARAMETER :: coordinate = cartesian
 
 ! Flag for boundary condition
 ! The boundary flag is defined by four scalar
@@ -79,22 +84,22 @@ INTEGER, PARAMETER :: coordinate = cylindrical
 ! 2 = reflecting boundary (depend on scalar/vector)
 ! 3 = axis-symmetric
 ! 4 = equatorial-symmetric
-INTEGER, PARAMETER :: boundary_flag(6) = (/1,1,0,0,1,1/)
+INTEGER, PARAMETER :: boundary_flag(6) = (/1,1,1,1,1,1/)
 
 ! Starting position of the grid !
-REAL*8, PARAMETER :: x_start = 1.5d0
+REAL*8, PARAMETER :: x_start = 0.0d0
 REAL*8, PARAMETER :: y_start = 0.0d0
-REAL*8, PARAMETER :: z_start = -5.0d0
+REAL*8, PARAMETER :: z_start = 0.0d0
 
 ! Ending position of the grid !
-REAL*8, PARAMETER :: x_end = 11.5d0
-REAL*8, PARAMETER :: y_end = 2.0d0*pi
-REAL*8, PARAMETER :: z_end = 5.0d0
+REAL*8, PARAMETER :: x_end = 1.0d0
+REAL*8, PARAMETER :: y_end = 1.0d0
+REAL*8, PARAMETER :: z_end = 1.0d0
 
 ! The total number of grid in the x, y, z direction
-INTEGER, PARAMETER :: nxtot = 128
-INTEGER, PARAMETER :: nytot = 1
-INTEGER, PARAMETER :: nztot = 128
+INTEGER, PARAMETER :: nxtot = 64
+INTEGER, PARAMETER :: nytot = 64
+INTEGER, PARAMETER :: nztot = 64
 
 ! Grid sizes for uniform grid 
 REAL*8, PARAMETER :: dx = (x_end - x_start)/DBLE(nxtot)	
@@ -111,7 +116,7 @@ INTEGER, PARAMETER :: nz = nztot/NZCPU
 REAL*8, PARAMETER :: cfl = 0.30D0			
 
 ! Maximum time to be simulated in the model
-REAL*8, PARAMETER :: total_time = 10.0d0
+REAL*8, PARAMETER :: total_time = 0.295d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Output setting
@@ -124,7 +129,7 @@ REAL*8, PARAMETER :: output_logtime = 10.0d0
 
 ! Physical time interval for each hydro profile
 REAL*8 :: output_profiletime_last = 0.0D0
-REAL*8, PARAMETER :: output_profiletime = 10.0d0
+REAL*8, PARAMETER :: output_profiletime = 0.5d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for riemann solvers
