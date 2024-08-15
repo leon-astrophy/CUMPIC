@@ -26,13 +26,13 @@ SAVE
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 ! Number of CPUs along the first dimension
-INTEGER, PARAMETER :: NXCPU = 2
+INTEGER, PARAMETER :: NXCPU = 1
 
 ! Number of CPUs along the second dimension
-INTEGER, PARAMETER :: NYCPU = 2
+INTEGER, PARAMETER :: NYCPU = 1
 
 ! Number of CPUs along the third dimension
-INTEGER, PARAMETER :: NZCPU = 2
+INTEGER, PARAMETER :: NZCPU = 1
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Constant and universal values 
@@ -69,7 +69,7 @@ INTEGER, PARAMETER :: cartesian_ks = 4
 INTEGER, PARAMETER :: spherical_ks = 5
 
 ! Use which coordiante? !
-INTEGER, PARAMETER :: coordinate = cartesian
+INTEGER, PARAMETER :: coordinate = spherical
 
 ! Flag for boundary condition
 ! The boundary flag is defined by four scalar
@@ -84,22 +84,22 @@ INTEGER, PARAMETER :: coordinate = cartesian
 ! 2 = reflecting boundary (depend on scalar/vector)
 ! 3 = axis-symmetric
 ! 4 = equatorial-symmetric
-INTEGER, PARAMETER :: boundary_flag(6) = (/1,1,1,1,1,1/)
+INTEGER, PARAMETER :: boundary_flag(6) = (/1,1,3,3,0,0/)
 
 ! Starting position of the grid !
-REAL*8, PARAMETER :: x_start = 0.0d0
-REAL*8, PARAMETER :: y_start = 0.0d0
+REAL*8, PARAMETER :: x_start = 3.0d0
+REAL*8, PARAMETER :: y_start = 0.02d0
 REAL*8, PARAMETER :: z_start = 0.0d0
 
 ! Ending position of the grid !
-REAL*8, PARAMETER :: x_end = 1.0d0
-REAL*8, PARAMETER :: y_end = 1.0d0
-REAL*8, PARAMETER :: z_end = 1.0d0
+REAL*8, PARAMETER :: x_end = 500.0d0
+REAL*8, PARAMETER :: y_end = pi - 0.02d0
+REAL*8, PARAMETER :: z_end = 2.0d0*pi
 
 ! The total number of grid in the x, y, z direction
-INTEGER, PARAMETER :: nxtot = 64
-INTEGER, PARAMETER :: nytot = 64
-INTEGER, PARAMETER :: nztot = 64
+INTEGER, PARAMETER :: nxtot = 128
+INTEGER, PARAMETER :: nytot = 126
+INTEGER, PARAMETER :: nztot = 124
 
 ! Grid sizes for uniform grid 
 REAL*8, PARAMETER :: dx = (x_end - x_start)/DBLE(nxtot)	
@@ -113,10 +113,10 @@ INTEGER, PARAMETER :: nz = nztot/NZCPU
 
 ! Cournat-Friedrich-Levy constant
 ! Defined as dt = cfl * dx / MAX(vel + cs)
-REAL*8, PARAMETER :: cfl = 0.30D0			
+REAL*8, PARAMETER :: cfl = 0.70D0			
 
 ! Maximum time to be simulated in the model
-REAL*8, PARAMETER :: total_time = 0.295d0
+REAL*8, PARAMETER :: total_time = 10000.0d0
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for Output setting
@@ -125,11 +125,11 @@ REAL*8, PARAMETER :: total_time = 0.295d0
 
 ! Physical time interval for all log file
 REAL*8 :: output_logtime_last = 0.0D0
-REAL*8, PARAMETER :: output_logtime = 10.0d0                            
+REAL*8, PARAMETER :: output_logtime = 100.0d0                            
 
 ! Physical time interval for each hydro profile
 REAL*8 :: output_profiletime_last = 0.0D0
-REAL*8, PARAMETER :: output_profiletime = 0.5d0
+REAL*8, PARAMETER :: output_profiletime = 100.0d0     
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Section for riemann solvers

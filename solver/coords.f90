@@ -166,6 +166,64 @@ END SUBROUTINE
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !
+! Given index tuple (j,k,l), find the area 
+!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+SUBROUTINE GEOM_AREA(j_in,k_in,l_in,axp,axm,ayp,aym,azp,azm)
+!$ACC ROUTINE (GET_COORD) SEQ
+!$ACC ROUTINE (COORD_DX) SEQ
+!$ACC ROUTINE SEQ
+USE DEFINITION
+IMPLICIT NONE
+
+! Input !
+INTEGER, INTENT(IN) :: j_in, k_in, l_in
+
+! Output !
+REAL*8, INTENT (OUT) :: axp,axm,ayp,aym,azp,azm
+
+! Local !
+REAL*8 :: x_loc, y_loc, z_loc
+REAL*8 :: dx_loc, dy_loc, dz_loc
+
+!-----------------------------------------------------------------------------!
+! Pre compute, maybe can move it into each case to reduce computation !
+CALL GET_COORD(j_in,k_in,l_in,x_loc,y_loc,z_loc)
+CALL COORD_DX(j_in,k_in,l_in,dx_loc,dy_loc,dz_loc)
+
+select case(coordinate)
+!-----------------------------------------------------------------------------!
+case(cartesian)
+	axp = dy_loc*dz_loc
+	axm = dy_loc*dz_loc
+	ayp = dx_loc*dz_loc
+	aym = dx_loc*dz_loc
+	azp = dx_loc*dy_loc
+	azm = dx_loc*dy_loc
+!-----------------------------------------------------------------------------!
+case(cylindrical)
+	axp = xF(j_in)*dy_loc*dz_loc
+	axm = xF(j_in-1)*dy_loc*dz_loc
+	ayp = dx_loc*dz_loc
+	aym = dx_loc*dz_loc
+	azp = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2)*dy_loc
+	azm = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2)*dy_loc
+!-----------------------------------------------------------------------------!
+case(spherical)
+	axp = xF(j_in)*xF(j_in)*(DCOS(yF(k_in-1)) - DCOS(yF(k_in)))*dz_loc
+	axm = xF(j_in-1)*xF(j_in-1)*(DCOS(yF(k_in-1)) - DCOS(yF(k_in)))*dz_loc
+	ayp = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2)*DSIN(yF(k_in))*dz_loc
+	aym = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2)*DSIN(yF(k_in-1))*dz_loc
+	azp = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2)*dy_loc
+	azm = 0.5d0*(xF(j_in)**2 - xF(j_in-1)**2)*dy_loc
+!-----------------------------------------------------------------------------!
+end select
+
+END SUBROUTINE
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!
 ! Given index tuple (j,k,l), find the geometric factors
 !
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -211,7 +269,8 @@ case(cylindrical)
 	case (x_dir)
 		geom_flux_p = xF(j_in)
 		geom_flux_m = xF(j_in-1)
-		geom_flux_c = x_loc*dx_loc !0.5d0*(xF(j_in)**2 - xF(j_in-1)**2) 
+		geom_flux_c = x_loc*dx_loc 
+		!*dx0.5d0*(xF(j_in)**2 - xF(j_in-1)**2), equivalent expression 
 	case (y_dir)
 		geom_flux_p = 1.0D0
 		geom_flux_m = 1.0D0

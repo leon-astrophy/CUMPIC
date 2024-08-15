@@ -10,7 +10,7 @@ F90 = /home/leon/HDF5-GPU/bin/h5pfc
 
 # MPI fortran #
 #F90 = mpifort
-PARALLEL = -DMPI
+#PARALLEL = -DMPI
 
 ######################################################
 # Section for GPU #

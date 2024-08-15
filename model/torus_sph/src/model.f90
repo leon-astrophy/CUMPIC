@@ -26,6 +26,7 @@ REAL*8 :: x_loc, y_loc, z_loc
 REAL*8 :: dx_loc, dy_loc, dz_loc
 
 ! Real variables !
+REAL*8 :: s_eq
 REAL*8 :: rho_a
 REAL*8 :: lkep2
 REAL*8 :: omega
@@ -72,10 +73,10 @@ ALLOCATE(A_corner(-2:nx+3,-2:ny+3,-2:nz+3))
 lkep2 = s_max**(2.0d0*q_grad - 1.0d0)/(s_max - r_sh)**2
 
 ! Find integration constant !
-c_const = schwarzschild(s_in,0.0d0,r_sh) - lkep2*s_in**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad)
+c_const = schwarzschild(s_in,r_sh) - lkep2*s_in**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad)
 
 ! Find enthalpy !
-enthalpy = - schwarzschild(s_max,0.0d0,r_sh) + lkep2*s_max**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad) + c_const
+enthalpy = - schwarzschild(s_max,r_sh) + lkep2*s_max**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad) + c_const
 
 ! Find polytropic constant, defined at the position of maximum density along equator, and we set the max density to be 1 !
 k_poly = enthalpy*(ggas - 1.0d0)/ggas/rho_max**(ggas - 1.0d0)
@@ -96,8 +97,11 @@ DO l = 1, nz
       ! Get coordinate !
       CALL GET_COORD(j,k,l,x_loc,y_loc,z_loc)
 
+      ! Polar radius !
+      s_eq = x_loc*DSIN(y_loc)
+
       ! Find enthalpy !
-      enthalpy = - schwarzschild(x_loc,z_loc,r_sh) + lkep2*x_loc**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad) + c_const
+      enthalpy = - schwarzschild(x_loc,r_sh) + lkep2*s_eq**(2.0d0 - 2.0d0*q_grad)/(2.0d0 - 2.0d0*q_grad) + c_const
 
       ! Find density !
       IF(enthalpy < 0.0d0) THEN
@@ -108,22 +112,22 @@ DO l = 1, nz
       rho_local = (enthalpy*(ggas - 1.0d0)/ggas/k_poly)**(1.0d0/(ggas - 1.0d0))
 
       ! Select based on conditions !
-      IF (rho_local > rho_a .AND. x_loc >= s_in) THEN
+      IF (rho_local > rho_a .AND. s_eq >= s_in) THEN
         prim(irho,j,k,l) = rho_local
-        omega = DSQRT(lkep2)*x_loc**(-q_grad)
-        prim(ivy,j,k,l) = omega*x_loc
+        omega = DSQRT(lkep2)*s_eq**(-q_grad)
+        prim(ivz,j,k,l) = omega*s_eq
         prim(itau,j,k,l) = k_poly*prim(irho,j,k,l)**(ggas)
         eps(j,k,l) = k_poly*prim(irho,j,k,l)**(ggas - 1.0D0)/(ggas - 1.0D0)
       ELSE
         prim(irho,j,k,l) = rho_a
-        prim(ivy,j,k,l) = 0.0d0   
+        prim(ivz,j,k,l) = 0.0d0   
         prim(itau,j,k,l) = k_poly*prim(irho,j,k,l)**(ggas)
         eps(j,k,l) = k_poly*prim(irho,j,k,l)**(ggas - 1.0D0)/(ggas - 1.0D0)        
       END IF
 
       ! vector potential !
       IF(prim(irho,j,k,l) >= rho_cut) THEN
-        A_phi(j,k,l) = (prim(irho,j,k,l) - rho_cut)/rho_max
+        A_phi(j,k,l) = (prim(irho,j,k,l)/rho_max)*(x_loc/3.0*DSIN(y_loc))**3*DEXP(-x_loc/400.0d0) - rho_cut
       END IF
 
     END DO
@@ -151,8 +155,8 @@ DO l = 0, nz
     DO j = 0, nx
       CALL GET_COORD(j,k,l,x_loc,y_loc,z_loc)
       CALL COORD_DX(j,k,l,dx_loc,dy_loc,dz_loc)
-      prim(ibx,j,k,l) = - (A_corner(j,k,l) - A_corner(j,k,l-1))/(dz_loc)
-      prim(ibz,j,k,l) = (xF(j)*A_corner(j,k,l) - xF(j-1)*A_corner(j-1,k,l))/(x_loc*dx_loc)
+      prim(ibx,j,k,l) = (DSIN(yF(k))*A_corner(j,k,l) - SIN(yF(k-1))*A_corner(j,k-1,l))/(xF(j)*(DCOS(yF(k-1)) - DCOS(yF(k))))
+      prim(iby,j,k,l) = - (xF(j)*A_corner(j,k,l) - xF(j-1)*A_corner(j-1,k,l))/(x_loc*dx_loc)
     END DO
   END DO
 END DO
@@ -162,7 +166,7 @@ DO l = 1, nz
   DO k = 1, ny
     DO j = 1, nx
       bcell(ibx,j,k,l) = 0.5D0*(prim(ibx,j,k,l) + prim(ibx,j-1,k,l))
-      bcell(ibz,j,k,l) = 0.5D0*(prim(ibz,j,k,l) + prim(ibz,j,k-1,l))
+      bcell(iby,j,k,l) = 0.5D0*(prim(iby,j,k,l) + prim(iby,j,k-1,l))
     END DO
   END DO
 END DO
@@ -201,7 +205,7 @@ DO l = 0, nz
   DO k = 0, ny
     DO j = 0, nx
       prim(ibx,j,k,l) = prim(ibx,j,k,l)*norm
-      prim(ibz,j,k,l) = prim(ibz,j,k,l)*norm
+      prim(iby,j,k,l) = prim(iby,j,k,l)*norm
     END DO
   END DO
 END DO
@@ -209,7 +213,7 @@ DO l = 1, nz
   DO k = 1, ny
     DO j = 1, nx
       bcell(ibx,j,k,l) = bcell(ibx,j,k,l)*norm
-      bcell(ibz,j,k,l) = bcell(ibz,j,k,l)*norm
+      bcell(iby,j,k,l) = bcell(iby,j,k,l)*norm
     END DO
   END DO
 END DO
@@ -271,10 +275,10 @@ DEALLOCATE(A_corner)
 
 contains
 
-  REAL*8 function schwarzschild(r_in,z_in,r_g)
+  REAL*8 function schwarzschild(r_in,r_g)
   implicit none
-  REAL*8 :: r_in, z_in, r_g
-  schwarzschild = -1.0d0/(DSQRT(r_in**2 + z_in**2) - r_g)
+  REAL*8 :: r_in, r_g
+  schwarzschild = -1.0d0/(r_in - r_g)
   end function
 
 END SUBROUTINE

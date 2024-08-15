@@ -155,6 +155,9 @@ DO while (global_time < total_time)
     call print_hydroprofile 
     n_iter = n_iter + 1
 
+    ! also check the divergence !
+    CALL find_divb
+
   END IF
 
 END DO
@@ -163,6 +166,9 @@ END DO
 ! Output again
 
 call print_hydroprofile
+
+! also check the divergence !
+CALL find_divb
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! Finalize MPI !

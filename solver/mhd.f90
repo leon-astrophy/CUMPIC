@@ -9,6 +9,64 @@
 
 !***********************************************************************
 !
+! Find the divergence of magnetic field 
+!
+!***********************************************************************
+SUBROUTINE find_divb
+!$ACC ROUTINE (GEOM_AREA) SEQ
+USE DEFINITION
+IMPLICIT NONE
+
+#ifdef MPI
+include "mpif.h"
+#endif
+
+! Integer !
+INTEGER :: j, k, l
+
+! Real !
+REAL*8 :: maxdb, div_b
+
+! For the divergence condition !
+REAL*8 :: axp
+REAL*8 :: axm
+REAL*8 :: ayp
+REAL*8 :: aym
+REAL*8 :: azp
+REAL*8 :: azm
+
+!---------------------------------------------------------------------------------------------------------!
+
+! Check divergence-B = 0 constraint !
+maxdb = 0.0d0       
+DO l = 1, nz
+  DO k = 1, ny
+    DO j = 1, nx
+      CALL GEOM_AREA(j,k,l,axp,axm,ayp,aym,azp,azm)
+      div_b = (axp*prim(ibx,j,k,l) - axm*prim(ibx,j-1,k,l)) &
+            + (ayp*prim(iby,j,k,l) - aym*prim(iby,j,k-1,l)) &
+            + (azp*prim(ibz,j,k,l) - azm*prim(ibz,j,k,l-1))
+      maxdb = MAX(maxdb, div_b)
+    END DO
+  END DO
+END DO
+
+! Communicate across all processor 
+#ifdef MPI
+CALL MPI_Allreduce(maxdb, maxdb, 1, MPI_DOUBLE, MPI_MAX, new_comm, ierror)
+#endif
+
+! Print out !
+WRITE (*,*)
+WRITE (*,*) 'Maximum divergence B', maxdb
+WRITE (*,*)
+
+!---------------------------------------------------------------------------------------------------------!
+
+END SUBROUTINE
+  
+!***********************************************************************
+!
 ! Constrained transport on the mangetic field
 !
 !***********************************************************************
